@@ -137,4 +137,6 @@ class Rom
         cart_context ctx;
         std::string cart_lic_name();
         std::string cart_type_name();
+        uint8_t cart_read(uint16_t address);
+        void cart_write(uint16_t address, uint8_t data);
 };
