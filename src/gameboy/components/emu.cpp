@@ -1,4 +1,4 @@
 #include "emu.h"
 
-components_t Emu::cmp;
+components Emu::cmp;
 emu_context Emu::ctx;

@@ -1,9 +1,10 @@
+#pragma once
 #include <cstdint>
 #include <unordered_map>
 #include <string>
 #include <memory>
 
-typedef struct {
+struct rom_header {
     uint8_t entry[4];
     uint8_t logo[0x30];
     char title[16];
@@ -17,15 +18,14 @@ typedef struct {
     uint8_t version;
     uint8_t checksum;
     uint16_t global_checksum;
-} rom_header;
+};
 
-
-typedef struct {
+struct cart_context {
     char filename[1024];
     uint32_t rom_size;
     std::unique_ptr<uint8_t[]> rom_data;
     rom_header header;
-} cart_context;
+};
 
 
 static const std::unordered_map<uint8_t, std::string> ROM_TYPES = {

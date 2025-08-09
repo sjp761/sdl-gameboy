@@ -1,12 +1,13 @@
+#pragma once
 #include "rom.h"
 #include "cpu.h"
-
-typedef struct components
+#include "bus.h"
+struct components
 {
     Rom rom; // Initialize Rom instance
     Cpu cpu;
-} components_t;
-
+    Bus bus;
+};
 
 struct emu_context 
 {
@@ -18,6 +19,6 @@ struct emu_context
 class Emu
 {
     public:
-        static components_t cmp;
+        static components cmp;
         static emu_context ctx;
 };

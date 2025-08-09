@@ -1,3 +1,4 @@
+#pragma once
 #include <cstdint>
 #include "instruction.h"
 
@@ -20,11 +21,22 @@ class Cpu
     public:
         void cpu_init();
         bool cpu_step();
+        void fetch_data();
+        void emu_cycles();
+        void fetch_instruction();
+        void execute_instruction();
         cpu_registers regs;
-        uint16_t fetch_data;
+        uint16_t fetched_data;
         uint16_t mem_dest;
         Instruction *current_instruction;
         uint8_t opcode;
         bool halted;
         bool stepping;
+};
+
+
+class CPUutils
+{
+    public:
+        static uint16_t read_register(reg_type rt);
 };

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cstring>
 #include <iomanip>
+#include "emu.h"
 
 bool Rom::cart_load(const std::string &filename)
 {
@@ -74,3 +75,13 @@ std::string Rom::cart_type_name()
         return it->second;
     }
     return "UNKNOWN";}
+
+uint8_t Rom::cart_read(uint16_t address)
+{
+    return Emu::cmp.rom.ctx.rom_data[address];
+}
+
+void Rom::cart_write(uint16_t address, uint8_t data)
+{
+
+}

@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include <unordered_map>
 
 // Addressing modes for Game Boy instructions.
 // Each mode describes how operands are accessed or interpreted.
@@ -104,23 +105,17 @@ enum cond_type {
     CT_NONE, CT_NZ, CT_Z, CT_NC, CT_C
 };
 
-class Instruction {
-public:
+struct Instruction {
     in_type type;
     oprnd_desc desc;
     reg_type reg_1;
     reg_type reg_2; // Not all registers will be used always
     cond_type cond;
     uint8_t param;
-    Instruction *instruction_by_opcode(uint8_t opcode);
-    std::string inst_name(in_type t);
-
-
-    Instruction()
-        : type(IN_NONE), desc(AM_IMP), reg_1(RT_NONE), reg_2(RT_NONE), cond(CT_NONE), param(0) {}
-
-    Instruction(in_type t, oprnd_desc m, reg_type r1, reg_type r2, cond_type c, uint8_t p)
-        : type(t), desc(m), reg_1(r1), reg_2(r2), cond(c), param(p) {}
-    
-
+    //std::string inst_name(in_type t);
+    static Instruction *instruction_by_opcode(uint8_t opcode);
 };
+
+
+extern std::unordered_map<uint8_t, Instruction> InstructionMap; //When global, will cause "multiple definition instruction" so define in CPP file instead
+
