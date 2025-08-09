@@ -1,17 +1,26 @@
 #include <unordered_map>
 #include "instruction.h"
+#include "cpu.h"
 
-std::unordered_map<uint8_t, Instruction> InstructionMap {
-    { 0x00, { IN_NOP, AM_IMP, RT_NONE, RT_NONE, CT_NONE, 0 } },
-    { 0x01, { IN_LD, AM_R_N16, RT_BC, RT_NONE, CT_NONE, 0 } },
-    { 0x02, { IN_LD, AM_MR_R, RT_A, RT_BC, CT_NONE, 0 } },
-};
-
-Instruction *Instruction::instruction_by_opcode(uint8_t opcode)
+Instruction::Instruction(Opcode opcode)
 {
-    auto it = InstructionMap.find(opcode);
-    if (it != InstructionMap.end()) {
-        return &it->second;
+    if (opcode.whole == 0x00) 
+    {
+        type = IN_NOP;
+        return;
     }
-    return nullptr; // or handle as you wish
+    // Handle 0x00xx opcodes
+    else if (opcode.x() == 0x00 && opcode.z() == 0x00 && opcode.y() == 1)
+    {  // LD A16,SP
+        type = IN_LD;
+        reg1 = RT_SP;
+        oprnd = AM_A16_R;
+        return;
+    }
+    else
+    {
+        type = IN_NONE;
+        return;
+    }
+
 }

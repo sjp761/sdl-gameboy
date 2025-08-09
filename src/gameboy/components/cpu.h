@@ -1,6 +1,16 @@
 #pragma once
 #include <cstdint>
-#include "instruction.h"
+#include "instruction.h" // Ensure this header defines the full Instruction type
+
+struct Opcode
+{
+    uint8_t whole;
+    uint8_t x() const { return (whole >> 6) & 0x03; }
+    uint8_t y() const { return (whole >> 3) & 0x07; }
+    uint8_t z() const { return whole & 0x07; }
+    Opcode(uint8_t op) : whole(op) {}
+    Opcode() : whole(0) {}
+};
 
 struct cpu_registers
 {
@@ -24,19 +34,12 @@ class Cpu
         void fetch_data();
         void emu_cycles();
         void fetch_instruction();
-        void execute_instruction();
         cpu_registers regs;
         uint16_t fetched_data;
         uint16_t mem_dest;
-        Instruction *current_instruction;
-        uint8_t opcode;
+        Instruction instruction;
+        Opcode opcode;
         bool halted;
         bool stepping;
 };
 
-
-class CPUutils
-{
-    public:
-        static uint16_t read_register(reg_type rt);
-};
