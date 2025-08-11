@@ -6,6 +6,7 @@
 
 void Cpu::cpu_init()
 {
+    regs.pc = 0x100;
 }
 
 bool Cpu::cpu_step()
@@ -37,5 +38,6 @@ void Cpu::emu_cycles()
 void Cpu::fetch_instruction()
 {
     opcode = Opcode(Emu::cmp.bus.bus_read(regs.pc++));
-    std::cout << "Fetched instruction: " << static_cast<int>(opcode.whole) << std::endl;
+    std::cout << "Fetched instruction: " << static_cast<int>(opcode.whole)
+              << " at PC: " << std::hex << regs.pc - 1 << std::dec << std::endl;
 }

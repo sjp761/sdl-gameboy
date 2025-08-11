@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
     Emu::ctx.running = true;
     Emu::ctx.paused = false;
     Emu::ctx.ticks = 0;
-
+    Emu::cmp.cpu.cpu_init();
     while(Emu::ctx.running) {
         if (Emu::ctx.paused) {
             SDL_Delay(10);
