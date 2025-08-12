@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include "instruction.h" // Ensure this header defines the full Instruction type
+#include <json/json.h>
 
 struct Opcode
 {
@@ -41,5 +42,9 @@ class Cpu
         Opcode opcode;
         bool halted;
         bool stepping;
+
+#ifdef OPCODETEST
+        void set_opcode_test_data(Json::Value& root);
+#endif
 };
 

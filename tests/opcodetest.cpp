@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
     reader.parse(file, root);
     file.close();
     Cpu cpu;
-    
     cpu.opcode.whole = std::stoul(argv[1], nullptr, 16);
     cpu.instruction = Instruction(cpu.opcode);
+    cpu.set_opcode_test_data(root);
 }

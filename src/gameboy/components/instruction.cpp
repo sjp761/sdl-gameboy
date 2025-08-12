@@ -10,11 +10,17 @@ Instruction::Instruction(Opcode opcode)
         return;
     }
     // Handle 0x00xx opcodes
-    else if (opcode.x() == 0x00 && opcode.z() == 0x00 && opcode.y() == 1)
-    {  // LD A16,SP
+    else if (opcode.x() == 0x00 && opcode.z() == 0x00 && opcode.y() == 1) // LD A16,SP (0x08)
+    {  
         type = IN_LD;
         reg1 = RT_SP;
-        oprnd = AM_A16_R;
+        oprnd = AM_ADDR_R;
+        return;
+    }
+    else if (opcode.x() == 0x00 && opcode.z() == 0x00 && opcode.y() == 0x08) //JR e8 unconditional (0x18)
+    {
+        type = IN_JR;
+        oprnd = AM_R_IMM8;
         return;
     }
     else

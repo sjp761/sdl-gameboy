@@ -21,6 +21,10 @@ find_package(SDL3 REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(jsoncpp REQUIRED jsoncpp)
 
+target_compile_definitions(opcode-test PRIVATE 
+    OPCODETEST=1
+)
+
 foreach(target sdl-gameboy opcode-test)
     target_link_libraries(${target} PRIVATE ${SDL3_LIBRARIES} ${jsoncpp_LIBRARIES})
     target_include_directories(${target} PRIVATE ${jsoncpp_INCLUDE_DIRS})

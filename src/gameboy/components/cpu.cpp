@@ -4,6 +4,10 @@
 #include "instruction.h"
 #include <iostream>
 
+#ifdef OPCODETEST
+#include <json/json.h>
+#endif
+
 void Cpu::cpu_init()
 {
     regs.pc = 0x100;
@@ -41,3 +45,36 @@ void Cpu::fetch_instruction()
     std::cout << "Fetched instruction: " << static_cast<int>(opcode.whole)
               << " at PC: " << std::hex << regs.pc - 1 << std::dec << std::endl;
 }
+
+#ifdef OPCODETEST
+void Cpu::set_opcode_test_data(Json::Value& root)
+{
+    Json::Value testCase = root[0];
+    //std::cout << root[0].toStyledString() << std::endl;
+    Json::Value initial = testCase["initial"];
+    
+    // CPU registers
+    regs.pc = testCase["initial"]["pc"].asUInt();
+    regs.sp = testCase["initial"]["sp"].asUInt();
+    regs.a = testCase["initial"]["a"].asUInt();
+    regs.b = testCase["initial"]["b"].asUInt();
+    regs.c = testCase["initial"]["c"].asUInt();
+    regs.d = testCase["initial"]["d"].asUInt();
+    regs.e = testCase["initial"]["e"].asUInt();
+    regs.f = testCase["initial"]["f"].asUInt();
+    regs.h = testCase["initial"]["h"].asUInt();
+    regs.l = testCase["initial"]["l"].asUInt();
+    
+    std::cout << "Initial CPU state: "
+              << "PC: " << std::hex << regs.pc
+              << ", SP: " << std::dec << regs.sp
+              << ", A: " << static_cast<int>(regs.a)
+              << ", B: " << static_cast<int>(regs.b)
+              << ", C: " << static_cast<int>(regs.c)
+              << ", D: " << static_cast<int>(regs.d)
+              << ", E: " << static_cast<int>(regs.e)
+              << ", F: " << static_cast<int>(regs.f)
+              << ", H: " << static_cast<int>(regs.h)
+              << ", L: " << static_cast<int>(regs.l) << std::endl;
+}
+#endif

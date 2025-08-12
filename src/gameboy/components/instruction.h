@@ -7,29 +7,18 @@ struct Opcode;
 // Addressing modes for Game Boy instructions.
 // Each mode describes how operands are accessed or interpreted.
 // Examples are given for each mode using typical Game Boy assembly syntax.
-enum oprnd_desc
-{
-    AM_IMP,      // Implied: No operand. Example: NOP
-    AM_R_N16,    // Register, 16-bit immediate. Example: LD BC, 0x1234
-    AM_R_R,      // Register, Register. Example: LD A, B
-    AM_MR_R,     // Memory at register, Register. Example: LD (HL), A
-    AM_R,        // Single register operand. Example: INC B
-    AM_R_N8,     // Register, 8-bit immediate. Example: LD B, 0x12
-    AM_R_MR,     // Register, Memory at register. Example: LD A, (HL)
-    AM_R_HLI,    // Register, (HL+) (post-increment HL). Example: LD A, (HL+)
-    AM_R_HLD,    // Register, (HL-) (post-decrement HL). Example: LD A, (HL-)
-    AM_HLI_R,    // (HL+), Register. Example: LD (HL+), A
-    AM_HLD_R,    // (HL-), Register. Example: LD (HL-), A
-    AM_R_A8,     // Register, 8-bit address (high RAM). Example: LD A, (0xFF00 + n)
-    AM_A8_R,     // 8-bit address (high RAM), Register. Example: LD (0xFF00 + n), A
-    AM_HL_SPR,   // HL, SP + signed immediate. Example: LD HL, SP+e
-    AM_N16,      // 16-bit immediate. Example: JP 0x1234
-    AM_N8,       // 8-bit immediate. Example: ADD A, 0x12
-    AM_N16_R,    // 16-bit immediate, Register. Example: LD (0x1234), SP
-    AM_MR_N8,    // Memory at register, 8-bit immediate. Example: LD (HL), 0x12
-    AM_MR,       // Memory at register. Example: INC (HL)
-    AM_A16_R,    // 16-bit address, Register. Example: LD (0x1234), A
-    AM_R_A16     // Register, 16-bit address. Example: LD A, (0x1234)
+enum oprnd_desc {
+    AM_IMP,        // Implied (no operand)
+    AM_R,          // Register
+    AM_R_R,        // Register, Register
+    AM_R_IMM8,     // Register, 8-bit immediate
+    AM_R_IMM16,    // Register, 16-bit immediate
+    AM_R_MEM,      // Register, Memory
+    AM_MEM_R,      // Memory, Register
+    AM_MEM_IMM8,   // Memory, 8-bit immediate
+    AM_MEM,        // Memory (no register)
+    AM_R_ADDR,     // Register, Address (16-bit)
+    AM_ADDR_R      // Address (16-bit), Register
 };
 
 enum reg_type {
@@ -116,6 +105,8 @@ struct Instruction
     reg_type reg1;// Registers will not always be used
     reg_type reg2; 
     uint16_t data;
+    int hl_increment = 0; // -1 for decrement, 1 for increment, 0 for nothing
+    bool is_high_ram = false; // True if the instruction accesses high RAM (0xFF80-0xFFFF)
     Instruction() = default;
     Instruction(Opcode opcode);
     // std::string inst_name(in_type t);

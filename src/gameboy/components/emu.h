@@ -21,4 +21,5 @@ class Emu
     public:
         static components cmp;
         static emu_context ctx;
+        void emu_cycles(int cycles);
 };
