@@ -32,7 +32,11 @@ bool Cpu::cpu_step()
 
 void Cpu::fetch_data()
 {
-  
+   if (instruction.oprnd == AM_R_IMM16)
+   {
+       fetched_data = Emu::cmp.bus.bus_read(regs.pc);
+       regs.pc += 2;
+   }
 }
 
 void Cpu::emu_cycles()
@@ -48,7 +52,9 @@ void Cpu::fetch_instruction()
 
 void Cpu::execute_instruction()
 {
+#ifdef OPCODETEST
     regs.pc++;
+#endif
 }
 
 #ifdef OPCODETEST

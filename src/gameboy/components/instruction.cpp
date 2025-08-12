@@ -23,6 +23,13 @@ Instruction::Instruction(Opcode opcode)
         oprnd = AM_R_IMM8;
         return;
     }
+    else if (opcode.whole == 0x01) // LD BC, n16 (0x01)
+    {
+        type = IN_LD;
+        reg1 = RT_BC;
+        oprnd = AM_R_IMM16;
+        return;
+    }
     else
     {
         type = IN_NONE;

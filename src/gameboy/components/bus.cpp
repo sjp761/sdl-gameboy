@@ -19,3 +19,33 @@ void Bus::bus_write(uint16_t address, uint8_t data)
         Emu::cmp.rom.cart_write(address, data);
     }
 }
+
+void Bus::exram_write(uint16_t address, uint8_t value) //For External RAM
+{
+    eram[address & 0x1FFF] = value;
+}
+
+void Bus::echoram_write(uint16_t address, uint8_t value)
+{
+    wram_write(address - 0xE000, value);
+}
+
+void Bus::wram_write(uint16_t address, uint8_t value)
+{
+    wram[address & 0x1FFF] = value;
+}
+
+uint8_t Bus::exram_read(uint16_t address)
+{
+    return eram[address & 0x1FFF];
+}
+
+uint8_t Bus::echoram_read(uint16_t address)
+{
+    return wram_read(address - 0xE000);
+}
+
+uint8_t Bus::wram_read(uint16_t address)
+{
+    return wram[address & 0x1FFF];
+}
