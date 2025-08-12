@@ -46,11 +46,15 @@ void Cpu::fetch_instruction()
               << " at PC: " << std::hex << regs.pc - 1 << std::dec << std::endl;
 }
 
-#ifdef OPCODETEST
-void Cpu::set_opcode_test_data(Json::Value& root)
+void Cpu::execute_instruction()
 {
-    Json::Value testCase = root[0];
-    //std::cout << root[0].toStyledString() << std::endl;
+    regs.pc++;
+}
+
+#ifdef OPCODETEST
+void Cpu::set_opcode_test_data(Json::Value& root, int index)
+{
+    Json::Value testCase = root[index];
     Json::Value initial = testCase["initial"];
     
     // CPU registers
@@ -76,5 +80,75 @@ void Cpu::set_opcode_test_data(Json::Value& root)
               << ", F: " << static_cast<int>(regs.f)
               << ", H: " << static_cast<int>(regs.h)
               << ", L: " << static_cast<int>(regs.l) << std::endl;
+}
+
+bool Cpu::check_opcode_data(Json::Value& root, int index)
+{
+    Json::Value testCase = root[index];
+    Json::Value expected = testCase["final"];
+    
+
+        if (regs.pc != expected["pc"].asUInt())
+        {
+            std::cerr << "PC mismatch: expected " << std::hex << expected["pc"].asUInt() 
+                    << ", got " << regs.pc << std::dec << std::endl;
+            return false;
+        }
+        if (regs.sp != expected["sp"].asUInt())
+        {
+            std::cerr << "SP mismatch: expected " << std::hex << expected["sp"].asUInt()
+                      << ", got " << regs.sp << std::dec << std::endl;
+            return false;
+        }
+        if (regs.a != expected["a"].asUInt())
+        {
+            std::cerr << "A mismatch: expected " << std::hex << expected["a"].asUInt()
+                      << ", got " << static_cast<int>(regs.a) << std::dec << std::endl;
+            return false;
+        }
+        if (regs.b != expected["b"].asUInt())
+        {
+            std::cerr << "B mismatch: expected " << std::hex << expected["b"].asUInt()
+                      << ", got " << static_cast<int>(regs.b) << std::dec << std::endl;
+            return false;
+        }
+        if (regs.c != expected["c"].asUInt())
+        {
+            std::cerr << "C mismatch: expected " << std::hex << expected["c"].asUInt()
+                      << ", got " << static_cast<int>(regs.c) << std::dec << std::endl;
+            return false;
+        }
+        if (regs.d != expected["d"].asUInt())
+        {
+            std::cerr << "D mismatch: expected " << std::hex << expected["d"].asUInt()
+                      << ", got " << static_cast<int>(regs.d) << std::dec << std::endl;
+            return false;
+        }
+        if (regs.e != expected["e"].asUInt())
+        {
+            std::cerr << "E mismatch: expected " << std::hex << expected["e"].asUInt()
+                      << ", got " << static_cast<int>(regs.e) << std::dec << std::endl;
+            return false;
+        }
+        if (regs.f != expected["f"].asUInt())
+        {
+            std::cerr << "F mismatch: expected " << std::hex << expected["f"].asUInt()
+                      << ", got " << static_cast<int>(regs.f) << std::dec << std::endl;
+            return false;
+        }
+        if (regs.h != expected["h"].asUInt())
+        {
+            std::cerr << "H mismatch: expected " << std::hex << expected["h"].asUInt()
+                      << ", got " << static_cast<int>(regs.h) << std::dec << std::endl;
+            return false;
+        }
+        if (regs.l != expected["l"].asUInt())
+        {
+            std::cerr << "L mismatch: expected " << std::hex << expected["l"].asUInt()
+                      << ", got " << static_cast<int>(regs.l) << std::dec << std::endl;
+            return false;
+        }
+
+    return true;
 }
 #endif

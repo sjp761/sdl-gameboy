@@ -6,6 +6,7 @@
 #include <json/json.h>
 #include <json/value.h>
 #include <string>
+#include <assert.h>
 
 int main(int argc, char* argv[])
 {
@@ -30,5 +31,14 @@ int main(int argc, char* argv[])
     Cpu cpu;
     cpu.opcode.whole = std::stoul(argv[1], nullptr, 16);
     cpu.instruction = Instruction(cpu.opcode);
-    cpu.set_opcode_test_data(root);
+    for (int i = 0; i < root.size(); ++i)
+    {
+        cpu.set_opcode_test_data(root, i);
+        cpu.execute_instruction();
+        if (!cpu.check_opcode_data(root, i))
+        {
+            std::cerr << "Opcode test failed for index: " << i << std::endl;
+            return 1; // Exit with error if any test fails
+        }
+    }
 }

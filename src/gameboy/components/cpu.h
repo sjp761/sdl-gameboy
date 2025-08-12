@@ -35,6 +35,7 @@ class Cpu
         void fetch_data();
         void emu_cycles();
         void fetch_instruction();
+        void execute_instruction();
         cpu_registers regs;
         uint16_t fetched_data;
         uint16_t mem_dest;
@@ -44,7 +45,8 @@ class Cpu
         bool stepping;
 
 #ifdef OPCODETEST
-        void set_opcode_test_data(Json::Value& root);
+        void set_opcode_test_data(Json::Value& root, int index);
+        bool check_opcode_data(Json::Value &root, int index);
 #endif
 };
 
