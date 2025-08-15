@@ -32,10 +32,13 @@ bool Cpu::cpu_step()
 
 void Cpu::fetch_data()
 {
+    #ifdef OPCODETEST
+        regs.pc++; //We dont call fetch instruction so increment PC here
+    #endif
    if (instruction.oprnd == AM_R_IMM16)
    {
-       fetched_data = Emu::cmp.bus.bus_read(regs.pc);
-       regs.pc += 2;
+    fetched_data = (Emu::cmp.bus.bus_read(regs.pc) << 8) | (Emu::cmp.bus.bus_read(regs.pc + 1));
+    regs.pc += 2;
    }
 }
 
@@ -45,6 +48,7 @@ void Cpu::emu_cycles()
 
 void Cpu::fetch_instruction()
 {
+
     opcode = Opcode(Emu::cmp.bus.bus_read(regs.pc++));
     std::cout << "Fetched instruction: " << static_cast<int>(opcode.whole)
               << " at PC: " << std::hex << regs.pc - 1 << std::dec << std::endl;
@@ -52,16 +56,19 @@ void Cpu::fetch_instruction()
 
 void Cpu::execute_instruction()
 {
-#ifdef OPCODETEST
-    regs.pc++;
-#endif
+    if (opcode.whole == 0x01) // LD BC, d16
+    {
+        std::cout << "Executing LD BC, d16 with fetched_data: " << std::hex << fetched_data << std::dec << std::endl;
+        regs.c = (fetched_data >> 8) & 0xFF;
+        regs.b = fetched_data & 0xFF;
+        std::cout << "Set B=" << static_cast<int>(regs.b) << ", C=" << static_cast<int>(regs.c) << std::endl;
+    }
 }
 
 #ifdef OPCODETEST
 void Cpu::set_opcode_test_data(Json::Value& root, int index)
 {
     Json::Value testCase = root[index];
-    Json::Value initial = testCase["initial"];
     
     // CPU registers
     regs.pc = testCase["initial"]["pc"].asUInt();
@@ -86,6 +93,15 @@ void Cpu::set_opcode_test_data(Json::Value& root, int index)
               << ", F: " << static_cast<int>(regs.f)
               << ", H: " << static_cast<int>(regs.h)
               << ", L: " << static_cast<int>(regs.l) << std::endl;
+    // Write the initial RAM value to memory using bus_write
+    const Json::Value& ramArray = testCase["initial"]["ram"];
+    for (const auto& ramEntry : ramArray)
+    {
+        uint16_t ram_addr = ramEntry[0].asUInt();
+        uint8_t ram_value = ramEntry[1].asUInt();
+        Emu::cmp.bus.bus_write(ram_addr, ram_value);
+        std::cout << "Initial ram state: addr=" << std::hex << ram_addr << ", value=" << static_cast<int>(ram_value) << std::dec << std::endl;
+    }
 }
 
 bool Cpu::check_opcode_data(Json::Value& root, int index)
