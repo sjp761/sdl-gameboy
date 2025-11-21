@@ -78,7 +78,7 @@ std::string Rom::cart_type_name()
 
 uint8_t Rom::cart_read(uint16_t address)
 {
-    return Emu::cmp.rom.ctx.rom_data[address];
+    return ctx.rom_data[address];
 }
 
 void Rom::cart_write(uint16_t address, uint8_t data)

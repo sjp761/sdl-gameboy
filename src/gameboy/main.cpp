@@ -4,23 +4,26 @@
 
 int main(int argc, char* argv[])
 {
-    Emu::cmp.rom.cart_load("/home/user/Documents/projects/sdl-gameboy/roms/dmg-acid2.gb");
+    Emu emu; // Create emulator instance
+    
+    emu.get_rom().cart_load("/home/user/Documents/projects/sdl-gameboy/roms/dmg-acid2.gb");
 
-    Emu::ctx.running = true;
-    Emu::ctx.paused = false;
-    Emu::ctx.ticks = 0;
-    Emu::cmp.cpu.cpu_init();
-    while(Emu::ctx.running) {
-        if (Emu::ctx.paused) {
+    emu.ctx.running = true;
+    emu.ctx.paused = false;
+    emu.ctx.ticks = 0;
+    emu.get_cpu().cpu_init();
+    
+    while(emu.ctx.running) {
+        if (emu.ctx.paused) {
             SDL_Delay(10);
             continue;
         }
 
-        if (!Emu::cmp.cpu.cpu_step()) {
+        if (!emu.get_cpu().cpu_step()) {
             printf("CPU Stopped\n");
             return -3;
         }
 
-        Emu::ctx.ticks++;
+        emu.ctx.ticks++;
     }
 }

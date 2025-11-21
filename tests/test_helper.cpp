@@ -19,6 +19,16 @@ void CpuTestHelper::setInitialState(Cpu& cpu, Bus& bus, const Json::Value& testC
     cpu.regs.h = initial["h"].asUInt();
     cpu.regs.l = initial["l"].asUInt();
     
+    // Set IME flag if present
+    if (initial.isMember("ime")) {
+        cpu.ime = initial["ime"].asUInt() != 0;
+    }
+    
+    // Set IE register (0xFFFF) if present
+    if (initial.isMember("ie")) {
+        bus.bus_write(0xFFFF, initial["ie"].asUInt());
+    }
+    
     // Write initial RAM values to memory
     const Json::Value& ramArray = initial["ram"];
     for (const auto& ramEntry : ramArray) {
@@ -100,6 +110,27 @@ bool CpuTestHelper::verifyFinalState(Cpu& cpu, Bus& bus, const Json::Value& test
         std::cerr << "  L mismatch: expected 0x" << std::hex << std::setw(2) << std::setfill('0')
                   << expected["l"].asUInt() << ", got 0x" << static_cast<int>(cpu.regs.l) << std::dec << std::endl;
         success = false;
+    }
+    
+    // Check IME flag if present
+    if (expected.isMember("ime")) {
+        bool expected_ime = expected["ime"].asUInt() != 0;
+        if (cpu.ime != expected_ime) {
+            std::cerr << "  IME mismatch: expected " << expected_ime 
+                      << ", got " << cpu.ime << std::endl;
+            success = false;
+        }
+    }
+    
+    // Check IE register (0xFFFF) if present
+    if (expected.isMember("ie")) {
+        uint8_t expected_ie = expected["ie"].asUInt();
+        uint8_t actual_ie = bus.bus_read(0xFFFF);
+        if (actual_ie != expected_ie) {
+            std::cerr << "  IE mismatch: expected 0x" << std::hex << std::setw(2) << std::setfill('0')
+                      << static_cast<int>(expected_ie) << ", got 0x" << static_cast<int>(actual_ie) << std::dec << std::endl;
+            success = false;
+        }
     }
     
     // TODO: Check RAM state if needed

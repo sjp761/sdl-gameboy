@@ -1,11 +1,16 @@
 #pragma once
 #include <cstdint>
+#include "memory_map.h"
 
+class Rom; // Forward declaration
 
 class Bus
 {
+    private:
+        Rom& rom;
+        
     public:
-        Bus() = default;
+        Bus(Rom& rom_ref);
         uint8_t bus_read(uint16_t address);
         void bus_write(uint16_t address, uint8_t data);
         void exram_write(uint16_t address, uint8_t value);
@@ -16,9 +21,10 @@ class Bus
         uint8_t echoram_read(uint16_t address);
         uint8_t wram_read(uint16_t address);
         uint8_t vram_read(uint16_t address);
-        uint8_t eram[0x2000] = {}; // 8KB External RAM (0xA000-0xBFFF)
-        uint8_t wram[0x2000] = {}; // 8KB Work RAM (0xC000-0xDFFF)
-        uint8_t vram[0x2000] = {}; // 8KB Video RAM (0x8000-0x9FFF)
-        uint8_t oam_io[0x180] = {}; // OAM + I/O (0xFE00-0xFF7F)
-        uint8_t high_ram[0x7F] = {}; // 127 bytes High RAM (0xFF80-0xFFFE)
+        uint8_t eram[MemoryMap::ERAM_SIZE] = {}; // 8KB External RAM (0xA000-0xBFFF)
+        uint8_t wram[MemoryMap::WRAM_SIZE] = {}; // 8KB Work RAM (0xC000-0xDFFF)
+        uint8_t vram[MemoryMap::VRAM_SIZE] = {}; // 8KB Video RAM (0x8000-0x9FFF)
+        uint8_t oam_io[MemoryMap::OAM_IO_SIZE] = {}; // OAM + I/O (0xFE00-0xFF7F)
+        uint8_t high_ram[MemoryMap::HRAM_SIZE] = {}; // 127 bytes High RAM (0xFF80-0xFFFE)
+        uint8_t ie_register = 0; // Interrupt Enable register (0xFFFF)
 };

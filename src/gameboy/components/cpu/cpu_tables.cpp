@@ -1,0 +1,184 @@
+#include "cpu.h"
+
+// Static instruction metadata table - defines length, cycles, and immediate data for each opcode
+const InstructionInfo Cpu::INSTRUCTION_TABLE[256] = {
+    // 0x00-0x0F
+    {1, 4, 0, false, 0},  // 0x00 NOP
+    {3, 12, 0, true, 2},  // 0x01 LD BC, u16
+    {1, 8, 0, false, 0},  // 0x02 LD (BC), A
+    {1, 8, 0, false, 0},  // 0x03 INC BC
+    {1, 4, 0, false, 0},  // 0x04 INC B
+    {1, 4, 0, false, 0},  // 0x05 DEC B
+    {2, 8, 0, true, 1},   // 0x06 LD B, u8
+    {1, 4, 0, false, 0},  // 0x07 RLCA
+    {3, 20, 0, true, 2},  // 0x08 LD (u16), SP
+    {1, 8, 0, false, 0},  // 0x09 ADD HL, BC
+    {1, 8, 0, false, 0},  // 0x0A LD A, (BC)
+    {1, 8, 0, false, 0},  // 0x0B DEC BC
+    {1, 4, 0, false, 0},  // 0x0C INC C
+    {1, 4, 0, false, 0},  // 0x0D DEC C
+    {2, 8, 0, true, 1},   // 0x0E LD C, u8
+    {1, 4, 0, false, 0},  // 0x0F RRCA
+    
+    // 0x10-0x1F
+    {2, 4, 0, false, 0},  // 0x10 STOP
+    {3, 12, 0, true, 2},  // 0x11 LD DE, u16
+    {1, 8, 0, false, 0},  // 0x12 LD (DE), A
+    {1, 8, 0, false, 0},  // 0x13 INC DE
+    {1, 4, 0, false, 0},  // 0x14 INC D
+    {1, 4, 0, false, 0},  // 0x15 DEC D
+    {2, 8, 0, true, 1},   // 0x16 LD D, u8
+    {1, 4, 0, false, 0},  // 0x17 RLA
+    {2, 12, 0, true, 1},  // 0x18 JR e
+    {1, 8, 0, false, 0},  // 0x19 ADD HL, DE
+    {1, 8, 0, false, 0},  // 0x1A LD A, (DE)
+    {1, 8, 0, false, 0},  // 0x1B DEC DE
+    {1, 4, 0, false, 0},  // 0x1C INC E
+    {1, 4, 0, false, 0},  // 0x1D DEC E
+    {2, 8, 0, true, 1},   // 0x1E LD E, u8
+    {1, 4, 0, false, 0},  // 0x1F RRA
+    
+    // 0x20-0x2F
+    {2, 8, 12, true, 1},  // 0x20 JR NZ, e
+    {3, 12, 0, true, 2},  // 0x21 LD HL, u16
+    {1, 8, 0, false, 0},  // 0x22 LD (HL+), A
+    {1, 8, 0, false, 0},  // 0x23 INC HL
+    {1, 4, 0, false, 0},  // 0x24 INC H
+    {1, 4, 0, false, 0},  // 0x25 DEC H
+    {2, 8, 0, true, 1},   // 0x26 LD H, u8
+    {1, 4, 0, false, 0},  // 0x27 DAA
+    {2, 8, 12, true, 1},  // 0x28 JR Z, e
+    {1, 8, 0, false, 0},  // 0x29 ADD HL, HL
+    {1, 8, 0, false, 0},  // 0x2A LD A, (HL+)
+    {1, 8, 0, false, 0},  // 0x2B DEC HL
+    {1, 4, 0, false, 0},  // 0x2C INC L
+    {1, 4, 0, false, 0},  // 0x2D DEC L
+    {2, 8, 0, true, 1},   // 0x2E LD L, u8
+    {1, 4, 0, false, 0},  // 0x2F CPL
+    
+    // 0x30-0x3F
+    {2, 8, 12, true, 1},  // 0x30 JR NC, e
+    {3, 12, 0, true, 2},  // 0x31 LD SP, u16
+    {1, 8, 0, false, 0},  // 0x32 LD (HL-), A
+    {1, 8, 0, false, 0},  // 0x33 INC SP
+    {1, 12, 0, false, 0}, // 0x34 INC (HL)
+    {1, 12, 0, false, 0}, // 0x35 DEC (HL)
+    {2, 12, 0, true, 1},  // 0x36 LD (HL), u8
+    {1, 4, 0, false, 0},  // 0x37 SCF
+    {2, 8, 12, true, 1},  // 0x38 JR C, e
+    {1, 8, 0, false, 0},  // 0x39 ADD HL, SP
+    {1, 8, 0, false, 0},  // 0x3A LD A, (HL-)
+    {1, 8, 0, false, 0},  // 0x3B DEC SP
+    {1, 4, 0, false, 0},  // 0x3C INC A
+    {1, 4, 0, false, 0},  // 0x3D DEC A
+    {2, 8, 0, true, 1},   // 0x3E LD A, u8
+    {1, 4, 0, false, 0},  // 0x3F CCF
+    
+    // 0x40-0x7F: LD r8, r8 and HALT - all 1 byte, 4 cycles (except (HL) = 8 cycles)
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 8, 0, false, 0}, {1, 8, 0, false, 0}, {1, 8, 0, false, 0}, {1, 8, 0, false, 0},
+    {1, 8, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    
+    // 0x80-0xBF: ALU operations - all 1 byte, 4 cycles (except (HL) = 8 cycles)
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 4, 0, false, 0},
+    {1, 4, 0, false, 0}, {1, 4, 0, false, 0}, {1, 8, 0, false, 0}, {1, 4, 0, false, 0},
+    
+    // 0xC0-0xCF
+    {1, 8, 20, false, 0}, // 0xC0 RET NZ
+    {1, 12, 0, false, 0}, // 0xC1 POP BC
+    {3, 12, 16, true, 2}, // 0xC2 JP NZ, u16
+    {3, 16, 0, true, 2},  // 0xC3 JP u16
+    {3, 12, 24, true, 2}, // 0xC4 CALL NZ, u16
+    {1, 16, 0, false, 0}, // 0xC5 PUSH BC
+    {2, 8, 0, true, 1},   // 0xC6 ADD A, u8
+    {1, 16, 0, false, 0}, // 0xC7 RST 0x00
+    {1, 8, 20, false, 0}, // 0xC8 RET Z
+    {1, 16, 0, false, 0}, // 0xC9 RET
+    {3, 12, 16, true, 2}, // 0xCA JP Z, u16
+    {2, 4, 0, false, 0},  // 0xCB CB prefix
+    {3, 12, 24, true, 2}, // 0xCC CALL Z, u16
+    {3, 24, 0, true, 2},  // 0xCD CALL u16
+    {2, 8, 0, true, 1},   // 0xCE ADC A, u8
+    {1, 16, 0, false, 0}, // 0xCF RST 0x08
+    
+    // 0xD0-0xDF
+    {1, 8, 20, false, 0}, // 0xD0 RET NC
+    {1, 12, 0, false, 0}, // 0xD1 POP DE
+    {3, 12, 16, true, 2}, // 0xD2 JP NC, u16
+    {1, 4, 0, false, 0},  // 0xD3 -
+    {3, 12, 24, true, 2}, // 0xD4 CALL NC, u16
+    {1, 16, 0, false, 0}, // 0xD5 PUSH DE
+    {2, 8, 0, true, 1},   // 0xD6 SUB A, u8
+    {1, 16, 0, false, 0}, // 0xD7 RST 0x10
+    {1, 8, 20, false, 0}, // 0xD8 RET C
+    {1, 16, 0, false, 0}, // 0xD9 RETI
+    {3, 12, 16, true, 2}, // 0xDA JP C, u16
+    {1, 4, 0, false, 0},  // 0xDB -
+    {3, 12, 24, true, 2}, // 0xDC CALL C, u16
+    {1, 4, 0, false, 0},  // 0xDD -
+    {2, 8, 0, true, 1},   // 0xDE SBC A, u8
+    {1, 16, 0, false, 0}, // 0xDF RST 0x18
+    
+    // 0xE0-0xEF
+    {2, 12, 0, true, 1},  // 0xE0 LD (0xFF00+u8), A
+    {1, 12, 0, false, 0}, // 0xE1 POP HL
+    {1, 8, 0, false, 0},  // 0xE2 LD (0xFF00+C), A
+    {1, 4, 0, false, 0},  // 0xE3 -
+    {1, 4, 0, false, 0},  // 0xE4 -
+    {1, 16, 0, false, 0}, // 0xE5 PUSH HL
+    {2, 8, 0, true, 1},   // 0xE6 AND A, u8
+    {1, 16, 0, false, 0}, // 0xE7 RST 0x20
+    {2, 16, 0, true, 1},  // 0xE8 ADD SP, e
+    {1, 4, 0, false, 0},  // 0xE9 JP HL
+    {3, 16, 0, true, 2},  // 0xEA LD (u16), A
+    {1, 4, 0, false, 0},  // 0xEB -
+    {1, 4, 0, false, 0},  // 0xEC -
+    {1, 4, 0, false, 0},  // 0xED -
+    {2, 8, 0, true, 1},   // 0xEE XOR A, u8
+    {1, 16, 0, false, 0}, // 0xEF RST 0x28
+    
+    // 0xF0-0xFF
+    {2, 12, 0, true, 1},  // 0xF0 LD A, (0xFF00+u8)
+    {1, 12, 0, false, 0}, // 0xF1 POP AF
+    {1, 8, 0, false, 0},  // 0xF2 LD A, (0xFF00+C)
+    {1, 4, 0, false, 0},  // 0xF3 DI
+    {1, 4, 0, false, 0},  // 0xF4 -
+    {1, 16, 0, false, 0}, // 0xF5 PUSH AF
+    {2, 8, 0, true, 1},   // 0xF6 OR A, u8
+    {1, 16, 0, false, 0}, // 0xF7 RST 0x30
+    {2, 12, 0, true, 1},  // 0xF8 LD HL, SP+e
+    {1, 8, 0, false, 0},  // 0xF9 LD SP, HL
+    {3, 16, 0, true, 2},  // 0xFA LD A, (u16)
+    {1, 4, 0, false, 0},  // 0xFB EI
+    {1, 4, 0, false, 0},  // 0xFC -
+    {1, 4, 0, false, 0},  // 0xFD -
+    {2, 8, 0, true, 1},   // 0xFE CP A, u8
+    {1, 16, 0, false, 0}  // 0xFF RST 0x38
+};

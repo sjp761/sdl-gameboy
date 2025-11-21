@@ -2,12 +2,7 @@
 #include "rom.h"
 #include "cpu.h"
 #include "bus.h"
-struct components
-{
-    Rom rom; // Initialize Rom instance
-    Cpu cpu;
-    Bus bus;
-};
+#include <memory>
 
 struct emu_context 
 {
@@ -18,8 +13,22 @@ struct emu_context
     
 class Emu
 {
+    private:
+        Rom rom;
+        Bus bus;
+        Cpu cpu;
+        
     public:
-        static components cmp;
-        static emu_context ctx;
+        emu_context ctx;
+        
+        Emu();
         void emu_cycles(int cycles);
+        
+        // Accessors for components
+        Rom& get_rom() { return rom; }
+        Bus& get_bus() { return bus; }
+        Cpu& get_cpu() { return cpu; }
+        const Rom& get_rom() const { return rom; }
+        const Bus& get_bus() const { return bus; }
+        const Cpu& get_cpu() const { return cpu; }
 };

@@ -63,13 +63,13 @@ TestResult testOpcode(const std::string& opcodeHex, const std::string& jsonPath)
     for (int i = 0; i < root.size(); ++i) {
         // Create fresh emulator instance for each test
         Emu emu;
-        emu.cmp.rom.create_blank_rom(0x8000);
+        emu.get_rom().create_blank_rom(0x8000);
         
         // Set initial state
-        CpuTestHelper::setInitialState(emu.cmp.cpu, emu.cmp.bus, root[i]);
+        CpuTestHelper::setInitialState(emu.get_cpu(), emu.get_bus(), root[i]);
         
         // Execute instruction using actual execution path
-        bool executed = emu.cmp.cpu.cpu_step();
+        bool executed = emu.get_cpu().cpu_step();
         
         if (!executed) {
             std::cerr << "Opcode 0x" << opcodeHex << " test case " << i 
@@ -79,7 +79,7 @@ TestResult testOpcode(const std::string& opcodeHex, const std::string& jsonPath)
         }
         
         // Verify final state
-        if (CpuTestHelper::verifyFinalState(emu.cmp.cpu, emu.cmp.bus, root[i])) {
+        if (CpuTestHelper::verifyFinalState(emu.get_cpu(), emu.get_bus(), root[i])) {
             result.passedTests++;
         } else {
             std::cerr << "Opcode 0x" << opcodeHex << " test case " << i 
