@@ -40,5 +40,6 @@ class Cpu
         Opcode opcode;
         bool halted;
         bool stepping;
+        bool ime; // Interrupt Master Enable flag
 };
 
