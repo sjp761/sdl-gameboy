@@ -19,5 +19,6 @@ class Bus
         uint8_t eram[0x2000] = {}; // 8KB External RAM (0xA000-0xBFFF)
         uint8_t wram[0x2000] = {}; // 8KB Work RAM (0xC000-0xDFFF)
         uint8_t vram[0x2000] = {}; // 8KB Video RAM (0x8000-0x9FFF)
+        uint8_t oam_io[0x180] = {}; // OAM + I/O (0xFE00-0xFF7F)
         uint8_t high_ram[0x7F] = {}; // 127 bytes High RAM (0xFF80-0xFFFE)
 };

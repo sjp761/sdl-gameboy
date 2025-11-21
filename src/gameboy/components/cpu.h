@@ -1,16 +1,14 @@
 #pragma once
 #include <cstdint>
-#include "instruction.h" // Ensure this header defines the full Instruction type
-#include <json/json.h>
 
 struct Opcode
 {
     uint8_t whole;
-    uint8_t x() const { return (whole >> 6) & 0x03; }
-    uint8_t y() const { return (whole >> 3) & 0x07; }
-    uint8_t z() const { return whole & 0x07; }
-    Opcode(uint8_t op) : whole(op) {}
-    Opcode() : whole(0) {}
+    uint8_t x;
+    uint8_t y;
+    uint8_t z;
+    Opcode(uint8_t op) : whole(op), x((op >> 6) & 0x03), y((op >> 3) & 0x07), z(op & 0x07) {}
+    Opcode() : whole(0), x(0), y(0), z(0) {}
 };
 
 struct cpu_registers
@@ -39,14 +37,8 @@ class Cpu
         cpu_registers regs;
         uint16_t fetched_data;
         uint16_t mem_dest;
-        Instruction instruction;
         Opcode opcode;
         bool halted;
         bool stepping;
-
-#ifdef OPCODETEST
-        void set_opcode_test_data(Json::Value& root, int index);
-        bool check_opcode_data(Json::Value &root, int index);
-#endif
 };
 

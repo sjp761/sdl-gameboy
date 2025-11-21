@@ -25,8 +25,16 @@ uint8_t Bus::bus_read(uint16_t address)
     {
         return echoram_read(address);
     }
-    else if (address >= 0xFF80 && address <= 0xFFFE)
+    else if (address >= 0xFE00 && address <= 0xFF7F)
     {
+        return oam_io[address - 0xFE00];
+    }
+    else if (address >= 0xFF80 && address <= 0xFFFF)
+    {
+        if (address == 0xFFFF) {
+            // 0xFFFF is the Interrupt Enable register, but for testing treat as RAM
+            return high_ram[0x7F];
+        }
         return high_ram[address & 0x7F];
     }
     return 255; // Default for unmapped areas
@@ -54,9 +62,18 @@ void Bus::bus_write(uint16_t address, uint8_t data)
     {
         echoram_write(address, data);
     }
-    else if (address >= 0xFF80 && address <= 0xFFFE)
+    else if (address >= 0xFE00 && address <= 0xFF7F)
     {
-        high_ram[address & 0x7F] = data;
+        oam_io[address - 0xFE00] = data;
+    }
+    else if (address >= 0xFF80 && address <= 0xFFFF)
+    {
+        if (address == 0xFFFF) {
+            // 0xFFFF is the Interrupt Enable register, but for testing treat as RAM
+            high_ram[0x7F] = data;
+        } else {
+            high_ram[address & 0x7F] = data;
+        }
     }
 }
 

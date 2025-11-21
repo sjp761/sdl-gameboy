@@ -101,5 +101,5 @@ void Rom::create_blank_rom(uint32_t size)
 
     // Clear the ROM header
     std::memset(&ctx.header, 0, sizeof(ctx.header));
-    std::cout << "Blank ROM of size " << ctx.rom_size << " bytes created.\n";
+    // std::cout << "Blank ROM of size " << ctx.rom_size << " bytes created.\n";
 }
