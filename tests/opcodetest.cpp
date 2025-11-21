@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
     reader.parse(file, root);
     file.close();
     Emu emu;
+    emu.cmp.rom.create_blank_rom(0x8000);
     emu.cmp.cpu.opcode.whole = std::stoul(opcode_hex, nullptr, 16);
     emu.cmp.cpu.instruction = Instruction(emu.cmp.cpu.opcode);
     for (int i = 0; i < root.size(); ++i)

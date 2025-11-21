@@ -9,6 +9,10 @@ uint8_t Bus::bus_read(uint16_t address)
     {
         return Emu::cmp.rom.cart_read(address);
     }
+    else if (address >= 0x8000 && address <= 0x9FFF)
+    {
+        return vram_read(address);
+    }
     else if (address >= 0xA000 && address <= 0xBFFF)
     {
         return exram_read(address);
@@ -21,6 +25,10 @@ uint8_t Bus::bus_read(uint16_t address)
     {
         return echoram_read(address);
     }
+    else if (address >= 0xFF80 && address <= 0xFFFE)
+    {
+        return high_ram[address & 0x7F];
+    }
     return 255; // Default for unmapped areas
 }
 
@@ -29,6 +37,10 @@ void Bus::bus_write(uint16_t address, uint8_t data)
     if (address < 0x8000)
     {
         Emu::cmp.rom.cart_write(address, data);
+    }
+    else if (address >= 0x8000 && address <= 0x9FFF)
+    {
+        vram_write(address, data);
     }
     else if (address >= 0xA000 && address <= 0xBFFF)
     {
@@ -42,6 +54,20 @@ void Bus::bus_write(uint16_t address, uint8_t data)
     {
         echoram_write(address, data);
     }
+    else if (address >= 0xFF80 && address <= 0xFFFE)
+    {
+        high_ram[address & 0x7F] = data;
+    }
+}
+
+void Bus::vram_write(uint16_t address, uint8_t value)
+{
+    vram[address & 0x1FFF] = value;
+}
+
+uint8_t Bus::vram_read(uint16_t address)
+{
+    return vram[address & 0x1FFF];
 }
 
 void Bus::exram_write(uint16_t address, uint8_t value) //For External RAM

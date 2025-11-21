@@ -56,13 +56,34 @@ void Cpu::fetch_instruction()
 
 void Cpu::execute_instruction()
 {
-    if (opcode.whole == 0x01) // LD BC, d16
+    // LD r16, u16: x = register pair, z == 1
+    if (opcode.z() == 1 && (opcode.x() >= 0 && opcode.x() <= 3))
     {
-        std::cout << "Executing LD BC, d16 with fetched_data: " << std::hex << fetched_data << std::dec << std::endl;
-        regs.c = (fetched_data >> 8) & 0xFF;
-        regs.b = fetched_data & 0xFF;
-        std::cout << "Set B=" << static_cast<int>(regs.b) << ", C=" << static_cast<int>(regs.c) << std::endl;
+        std::cout << "Executing LD r16, u16 (opcode: 0x" << std::hex << (int)opcode.whole << ") with fetched_data: 0x" << fetched_data << std::dec << std::endl;
+        switch (opcode.x()) {
+            case 0: // LD BC, u16
+                regs.c = (fetched_data >> 8) & 0xFF;
+                regs.b = fetched_data & 0xFF;
+                std::cout << "Set B=" << static_cast<int>(regs.b) << ", C=" << static_cast<int>(regs.c) << std::endl;
+                break;
+            case 1: // LD DE, u16
+                regs.e = (fetched_data >> 8) & 0xFF;
+                regs.d = fetched_data & 0xFF;
+                std::cout << "Set D=" << static_cast<int>(regs.d) << ", E=" << static_cast<int>(regs.e) << std::endl;
+                break;
+            case 2: // LD HL, u16
+                regs.l = (fetched_data >> 8) & 0xFF;
+                regs.h = fetched_data & 0xFF;
+                std::cout << "Set H=" << static_cast<int>(regs.h) << ", L=" << static_cast<int>(regs.l) << std::endl;
+                break;
+            case 3: // LD SP, u16
+                regs.sp = fetched_data;
+                std::cout << "Set SP=" << std::hex << regs.sp << std::dec << std::endl;
+                break;
+        }
     }
+
+    
 }
 
 #ifdef OPCODETEST

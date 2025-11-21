@@ -83,5 +83,23 @@ uint8_t Rom::cart_read(uint16_t address)
 
 void Rom::cart_write(uint16_t address, uint8_t data)
 {
+    // Writing to ROM is typically not allowed for read-only memory.
+    // However, if this is a writable cartridge (e.g., for save data), handle it here.
+    if (address < ctx.rom_size) {
+        ctx.rom_data[address] = data;
+    } else {
+        std::cerr << "Write attempt out of ROM bounds at address: 0x" 
+                  << std::hex << std::uppercase << address << std::dec << std::endl;
+    }
+}
 
+void Rom::create_blank_rom(uint32_t size)
+{
+    ctx.rom_size = size;
+    ctx.rom_data = std::make_unique<uint8_t[]>(ctx.rom_size);
+    std::memset(ctx.rom_data.get(), 0xFF, ctx.rom_size); // Initialize with 0xFF (common for blank ROMs)
+
+    // Clear the ROM header
+    std::memset(&ctx.header, 0, sizeof(ctx.header));
+    std::cout << "Blank ROM of size " << ctx.rom_size << " bytes created.\n";
 }
