@@ -162,31 +162,31 @@ void Cpu::set_flag_c(bool value) {
 }
 
 bool Cpu::get_flag_z() const {
-    return regs.f & 0x80;
+    return regs.f & 0x80; // Zero flag is bit 7
 }
 
 bool Cpu::get_flag_n() const {
-    return regs.f & 0x40;
+    return regs.f & 0x40; // Subtract flag is bit 6
 }
 
 bool Cpu::get_flag_h() const {
-    return regs.f & 0x20;
+    return regs.f & 0x20; // Half-carry flag is bit 5
 }
 
 bool Cpu::get_flag_c() const {
-    return regs.f & 0x10;
+    return regs.f & 0x10; // Carry flag is bit 4
 }
 
 void Cpu::set_flags_dec(uint8_t result, uint8_t original) {
     set_flag_z(result == 0);
     set_flag_n(true);
-    set_flag_h((result & 0x0F) == 0x0F); // Half-carry on borrow from bit 4
+    set_flag_h((result & 0x0F) == 0x0F); // Half-carry on borrow from bit 4, original - 1 cause lower nibble to be 0xF because of underflow
     // Carry flag unchanged
 }
 
 void Cpu::set_flags_inc(uint8_t result, uint8_t original) {
     set_flag_z(result == 0);
     set_flag_n(false);
-    set_flag_h((original & 0x0F) == 0x0F); // Half-carry on carry from bit 3
+    set_flag_h((original & 0x0F) == 0x0F); // Half-carry on carry from bit 3, original + 1 cause lower nibble to be 0 because of overflow
     // Carry flag unchanged
 }
