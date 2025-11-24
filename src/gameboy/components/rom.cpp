@@ -1,22 +1,35 @@
 #include "rom.h"
 #include <iostream>
-#include <fstream>
+#include <filesystem>
 #include <cstring>
 #include <iomanip>
 #include "emu.h"
 
 bool Rom::cart_load(const std::string &filename)
 {
-    std::ifstream file(filename, std::ios::binary | std::ios::ate);
-    if (!file.is_open()) {
-        std::cerr << "Failed to open ROM file: " << filename << std::endl;
+    namespace fs = std::filesystem;
+    
+    if (!fs::exists(filename)) {
+        std::cerr << "ROM file does not exist: " << filename << std::endl;
+        return false;
+    }
+    
+    if (!fs::is_regular_file(filename)) {
+        std::cerr << "Path is not a regular file: " << filename << std::endl;
         return false;
     }
 
-    ctx.rom_size = static_cast<uint32_t>(file.tellg());
+    ctx.rom_size = static_cast<uint32_t>(fs::file_size(filename));
     ctx.rom_data = std::make_unique<uint8_t[]>(ctx.rom_size);
-    file.seekg(0, std::ios::beg);
-    file.read(reinterpret_cast<char*>(ctx.rom_data.get()), ctx.rom_size);
+    
+    FILE* file = fopen(filename.c_str(), "rb");
+    if (!file) {
+        std::cerr << "Failed to open ROM file: " << filename << std::endl;
+        return false;
+    }
+    
+    fread(ctx.rom_data.get(), 1, ctx.rom_size, file);
+    fclose(file);
 
     // Import ROM header (first 0x50 bytes from 0x0100 to 0x014F)
 

@@ -1,6 +1,7 @@
 #include "bus.h"
 #include "rom.h"
 #include <cstdint>
+#include <cstdio>
 
 Bus::Bus(Rom& rom_ref) : rom(rom_ref) {}
 
@@ -64,6 +65,7 @@ void Bus::bus_write(uint16_t address, uint8_t data)
     }
     else if (MemoryMap::is_oam_io(address))
     {
+        serial_write(address, data);
         oam_io[address - MemoryMap::OAM_IO_START] = data;
     }
     else if (MemoryMap::is_hram(address))
@@ -114,4 +116,14 @@ uint8_t Bus::echoram_read(uint16_t address)
 uint8_t Bus::wram_read(uint16_t address)
 {
     return wram[address - MemoryMap::WRAM_START];
+}
+
+void Bus::serial_write(uint16_t address, uint8_t data)
+{
+    if (address == MemoryMap::SERIAL_CONTROL && (data & 0x81) == 0x81) {
+        // Transfer requested (bit 7 set) and internal clock (bit 0 set)
+        uint8_t serial_data = oam_io[MemoryMap::SERIAL_DATA - MemoryMap::OAM_IO_START];
+        printf("%c", serial_data);
+        fflush(stdout);
+    }
 }

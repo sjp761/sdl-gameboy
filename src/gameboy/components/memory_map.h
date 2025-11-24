@@ -48,6 +48,10 @@ namespace MemoryMap {
     // Interrupt Enable Register
     constexpr uint16_t IE_REGISTER = 0xFFFF;
     
+    // Serial Port Registers
+    constexpr uint16_t SERIAL_DATA = 0xFF01;      // SB - Serial transfer data
+    constexpr uint16_t SERIAL_CONTROL = 0xFF02;   // SC - Serial transfer control
+    
     // Helper functions to check address ranges
     inline bool is_rom(uint16_t address) {
         return address <= ROM_BANK_NN_END;
