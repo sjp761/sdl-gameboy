@@ -67,9 +67,11 @@ void Cpu::execute_x0_instructions() {
             }
             else if (opcode.y == 1)
             {
-                // LD SP, (u16)
-                uint8_t value = regs.sp & 0xFF;
-                bus.bus_write(fetched_data, value);
+                // LD (a16), SP - store SP at 16-bit address (little-endian)
+                uint8_t lo = regs.sp & 0xFF;
+                uint8_t hi = (regs.sp >> 8) & 0xFF;
+                bus.bus_write(fetched_data, lo);
+                bus.bus_write(fetched_data + 1, hi);
             }
             else if (opcode.y == 3)
             {

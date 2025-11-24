@@ -94,7 +94,13 @@ void Cpu::execute_x3_instructions() {
                 set_flag_c(((original & 0xFF) + (offset & 0xFF)) > 0xFF);
 
             }
-            
+            else if (opcode.y == 4)
+            {
+                // LD (a8), A
+                uint8_t addr = static_cast<uint8_t>(fetched_data);
+                uint8_t value = read_r8(R8::A);
+                bus.bus_write(0xFF00 + addr, value);
+            }
 
             break;
             
@@ -151,6 +157,20 @@ void Cpu::execute_x3_instructions() {
                 uint8_t value = bus.bus_read(fetched_data);
                 write_r8(R8::A, value);
                 
+            }
+            else if (opcode.y == 5)
+            {
+                //LD (u16), A
+                uint16_t addr = fetched_data;
+                uint8_t value = read_r8(R8::A);
+                bus.bus_write(addr, value);
+            }
+            else if (opcode.y == 4)
+            {
+                //LD (C), A
+                uint8_t addr = regs.c;
+                uint8_t value = read_r8(R8::A);
+                bus.bus_write(0xFF00 + addr, value);
             }
             break;
             

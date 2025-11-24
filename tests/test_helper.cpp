@@ -133,7 +133,21 @@ bool CpuTestHelper::verifyFinalState(Cpu& cpu, Bus& bus, const Json::Value& test
         }
     }
     
-    // TODO: Check RAM state if needed
-    
+    // Check RAM state if present: expected["ram"] is an array of [addr, value]
+    if (expected.isMember("ram")) {
+        const Json::Value& ramArray = expected["ram"];
+        for (const auto& ramEntry : ramArray) {
+            if (ramEntry.size() < 2) continue;
+            uint16_t addr = ramEntry[0].asUInt();
+            uint8_t expected_val = ramEntry[1].asUInt();
+            uint8_t actual_val = bus.bus_read(addr);
+            if (actual_val != expected_val) {
+                std::cerr << "  RAM mismatch at 0x" << std::hex << std::setw(4) << std::setfill('0')
+                          << addr << ": expected 0x" << std::setw(2) << static_cast<int>(expected_val)
+                          << ", got 0x" << std::setw(2) << static_cast<int>(actual_val) << std::dec << std::endl;
+                success = false;
+            }
+        }
+    }
     return success;
 }
