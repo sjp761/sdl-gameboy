@@ -121,8 +121,26 @@ void Cpu::execute_acc_flag_op(AccFlagOp op) {
             set_flag_c(carry != 0);
             break;
             
-        case AccFlagOp::DAA: // Decimal adjust accumulator
-            // TODO: Implement DAA logic
+        case AccFlagOp::DAA:
+        {
+            uint8_t correction = 0;
+            if (get_flag_h() | (get_flag_n() == false && (regs.a & 0x0F) > 0x09))
+                correction |= 0x06;
+            if (get_flag_c() | (get_flag_n() == false && regs.a > 0x99))
+                correction |= 0x60;
+            if (get_flag_n()) 
+            { // After subtraction
+                regs.a -= correction;
+            } 
+            else 
+            { 
+                regs.a += correction;
+            }
+            set_flag_z(regs.a == 0);
+            set_flag_h(false);
+            if (correction & 0x60) {
+                set_flag_c(true);}
+            }
             break;
             
         case AccFlagOp::CPL: // Complement A

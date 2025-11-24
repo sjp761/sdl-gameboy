@@ -24,37 +24,19 @@ bool Cpu::cpu_step()
 
 void Cpu::fetch_data()
 {
-   // Decode opcode directly to determine if we need to fetch immediate data
-   
-   // x=0 instructions
-   if (opcode.x == 0) {
-       if (opcode.z == 1 && !(opcode.y & 1)) {
-           // LD r16, u16 (even y values)
-           fetched_data = read_imm16();
-       } else if (opcode.z == 6) {
-           // LD r8, u8
-           fetched_data = read_imm8();
-       }
-   }
-   // x=3 instructions
-   else if (opcode.x == 3) {
-       if (opcode.z == 2 && opcode.y < 4) {
-           // JP cc, u16
-           fetched_data = read_imm16();
-       } else if (opcode.z == 3 && opcode.y == 0) {
-           // JP u16
-           fetched_data = read_imm16();
-       } else if (opcode.z == 4 && opcode.y < 4) {
-           // CALL cc, u16
-           fetched_data = read_imm16();
-       } else if (opcode.z == 5 && opcode.y == 1) {
-           // CALL u16
-           fetched_data = read_imm16();
-       } else if (opcode.z == 6) {
-           // ALU A, u8
-           fetched_data = read_imm8();
-       }
-   }
+    InstructionInfo info = INSTRUCTION_TABLE[opcode.whole];
+    switch (info.imm_size) 
+    {
+        case 1:
+            fetched_data = read_imm8();
+            break;
+        case 2:
+            fetched_data = read_imm16();
+            break;
+        default:
+            fetched_data = 0;
+            break;
+    }
 }
 
 void Cpu::emu_cycles()

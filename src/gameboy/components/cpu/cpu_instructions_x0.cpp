@@ -43,13 +43,17 @@ void Cpu::handle_dec_r16() {
 void Cpu::handle_ld_indirect() {
     R16_Group2 reg = static_cast<R16_Group2>(opcode.y >> 1);
     uint16_t addr = get_r16_group2(reg);
-    
-    if (opcode.z == 2) {
-        // LD (r16), A
-        bus.bus_write(addr, regs.a);
-    } else {
-        // LD A, (r16)
-        regs.a = bus.bus_read(addr);
+    if (opcode.y & 1)
+    {
+        //LD A, (r16)
+        uint8_t value = bus.bus_read(addr);
+        write_r8(R8::A, value);
+    }
+    else
+    {
+        //LD (r16), A
+        uint8_t value = read_r8(R8::A);
+        bus.bus_write(addr, value);
     }
 }
 
@@ -57,10 +61,50 @@ void Cpu::handle_ld_indirect() {
 void Cpu::execute_x0_instructions() {
     switch (opcode.z) {
         case 0: 
-            if (opcode.y == 0) {
+            if (opcode.y == 0) 
+            {
                 // NOP
             }
-            // Other y values: STOP, JR, etc. (to be implemented)
+            else if (opcode.y == 1)
+            {
+                // LD SP, (u16)
+                uint8_t value = regs.sp & 0xFF;
+                bus.bus_write(fetched_data, value);
+            }
+            else if (opcode.y == 3)
+            {
+                int8_t tojump = static_cast<int8_t>(fetched_data & 0xFF);
+                regs.pc += tojump;
+            }
+            else //JR conditionals e8
+            {
+                switch (static_cast<ConditionCode>(opcode.y & 0b11)) {
+                    case ConditionCode::NZ:
+                        if (!get_flag_z()) {
+                            int8_t tojump = static_cast<int8_t>(fetched_data & 0xFF);
+                            regs.pc += tojump;
+                        }
+                        break;
+                    case ConditionCode::Z:
+                        if (get_flag_z()) {
+                            int8_t tojump = static_cast<int8_t>(fetched_data & 0xFF);
+                            regs.pc += tojump;
+                        }
+                        break;
+                    case ConditionCode::NC:
+                        if (!get_flag_c()) {
+                            int8_t tojump = static_cast<int8_t>(fetched_data & 0xFF);
+                            regs.pc += tojump;
+                        }
+                        break;
+                    case ConditionCode::C:
+                        if (get_flag_c()) {
+                            int8_t tojump = static_cast<int8_t>(fetched_data & 0xFF);
+                            regs.pc += tojump;
+                        }
+                        break;
+                }
+            }
             break;
             
         case 1: // LD r16, u16 or ADD HL, r16
