@@ -14,11 +14,10 @@ struct Opcode
 
 // Instruction metadata for cycle timing and length
 struct InstructionInfo {
-    uint8_t length;        // Instruction length in bytes (1-3)
-    uint8_t cycles;        // Base cycle count
-    uint8_t cycles_branch; // Cycle count if branch taken (0 if not conditional)
-    bool has_immediate;    // Does it fetch immediate data?
-    uint8_t imm_size;      // 0, 1, or 2 bytes
+    char length;        // Instruction length in bytes (1-3)
+    char cycles;        // Base cycle count
+    char cycles_branch; // Cycle count if branch taken (0 if not conditional)
+    char imm_size;      // 0, 1, or 2 bytes
 };
 
 struct cpu_registers
@@ -119,6 +118,7 @@ class Cpu
         Opcode opcode;
         bool halted;
         bool stepping;
-        bool ime; // Interrupt Master Enable flag
+        bool ime = 0; // Interrupt Master Enable flag
+        bool ime_delay = 0;
 };
 

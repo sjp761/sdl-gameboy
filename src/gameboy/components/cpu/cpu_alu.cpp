@@ -121,10 +121,10 @@ void Cpu::execute_acc_flag_op(AccFlagOp op) {
             set_flag_c(carry != 0);
             break;
             
-        case AccFlagOp::DAA:
+        case AccFlagOp::DAA: // Singular ORs are for previous subtraction, ANDs for addition
         {
             uint8_t correction = 0;
-            if (get_flag_h() | (get_flag_n() == false && (regs.a & 0x0F) > 0x09))
+            if (get_flag_h() | (get_flag_n() == false && (regs.a & 0x0F) > 0x09)) 
                 correction |= 0x06;
             if (get_flag_c() | (get_flag_n() == false && regs.a > 0x99))
                 correction |= 0x60;

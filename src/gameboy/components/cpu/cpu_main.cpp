@@ -7,16 +7,26 @@ Cpu::Cpu(Bus& bus_ref) : bus(bus_ref), fetched_data(0), mem_dest(0), halted(fals
 void Cpu::cpu_init()
 {
     regs.pc = 0x100;
-    ime = true; // Interrupts enabled by default
+    ime = false; // Interrupts enabled by default
 }
 
 bool Cpu::cpu_step()
 {
     if (!halted)
     {
+        // Check if IME should be enabled from previous EI instruction
+        bool enable_ime_after = ime_delay;
+        
         fetch_instruction();
         fetch_data();
         execute_instruction();
+        
+        // Apply IME change after instruction execution (from previous EI)
+        if (enable_ime_after) {
+            ime = true;
+            ime_delay = false;
+        }
+        
         return true; // Indicate that a step was executed
     }
     return false; // Indicate that no step was executed

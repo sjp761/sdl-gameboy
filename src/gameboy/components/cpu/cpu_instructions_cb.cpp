@@ -3,7 +3,7 @@
 
 //  Instruction Group Handler CB 
 void Cpu::execute_cb_instructions() {
-    uint8_t cb_opcode = read_imm8();
+    uint8_t cb_opcode = static_cast<uint8_t>(fetched_data);
     Opcode cb_op(cb_opcode);
     R8 reg = static_cast<R8>(cb_op.z);
     
@@ -22,6 +22,7 @@ void Cpu::execute_cb_instructions() {
                 set_flag_z(!(value & (1 << bit)));
                 set_flag_n(false);
                 set_flag_h(true);
+                // Carry flag unchanged
             }
             break;
             

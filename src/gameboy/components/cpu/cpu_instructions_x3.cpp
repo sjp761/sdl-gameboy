@@ -14,9 +14,10 @@ void Cpu::handle_jp_and_interrupts() {
             break;
         case 6: // DI (0xF3) - Disable Interrupts
             ime = false;
+            ime_delay = false;
             break;
         case 7: // EI (0xFB) - Enable Interrupts
-            ime = true;
+            ime_delay = true; // Enable after next instruction
             break;
     }
 }
@@ -58,28 +59,69 @@ void Cpu::handle_call_conditional() {
 void Cpu::execute_x3_instructions() {
     switch (opcode.z) {
         case 0: // RET conditional
-            if (opcode.y < 4) {
+            if (opcode.y < 4) 
+            {
                 handle_ret_conditional();
+
             }
-            // y >= 4: other operations (to be implemented)
+            else if (opcode.y == 5)
+            {
+                // ADD SP, e8
+                int8_t value = static_cast<int8_t>(fetched_data & 0xFF);
+                uint16_t original = regs.sp;
+                regs.sp += value;
+                set_flag_c(((original & 0xFF) + (value & 0xFF)) > 0xFF); //We check carry on lower byte addition, not full 16 bit
+                set_flag_h(((original & 0x0F) + (value & 0x0F)) > 0x0F);
+                set_flag_n(false);
+                set_flag_z(false);
+            }
+            else if (opcode.y == 6)
+            {
+                //LDH A, (u8)
+                uint8_t addr = static_cast<uint8_t>(fetched_data);
+                uint8_t value = bus.bus_read(0xFF00 + addr);
+                write_r8(R8::A, value);
+            }
+            else if (opcode.y == 7)
+            {
+                //LD HL, SP+e8
+                int8_t offset = static_cast<int8_t>(fetched_data & 0xFF);
+                uint16_t original = regs.sp;
+                set_r16_group1(R16_Group1::HL, original + offset);
+                set_flag_z(false);
+                set_flag_n(false);
+                set_flag_h(((original & 0x0F) + (offset & 0x0F)) > 0x0F);
+                set_flag_c(((original & 0xFF) + (offset & 0xFF)) > 0xFF);
+
+            }
+            
+
             break;
             
         case 1: // POP r16 or RET/RETI/JP HL
             if (opcode.y & 1) {
                 // RET, RETI, JP HL, LD SP,HL (odd y)
-                switch (opcode.y) {
-                    case 1: // RET (0xC9)
+                switch (opcode.y >> 1) 
+                {
+                    case 0: // RET (0xC9)
                         {
                             uint8_t low = bus.bus_read(regs.sp++);
                             uint8_t high = bus.bus_read(regs.sp++);
                             regs.pc = (static_cast<uint16_t>(high) << 8) | low;
                         }
                         break;
-                    case 3: // (0xDB - not used)
+                    case 1: // RETI (0xD9)
+                        {
+                            uint8_t low = bus.bus_read(regs.sp++);
+                            uint8_t high = bus.bus_read(regs.sp++);
+                            regs.pc = (static_cast<uint16_t>(high) << 8) | low;
+                            ime = true;
+                        }
                         break;
-                    case 5: // (0xED - not used)
+                    case 2: // JP HL (0xE9)
+                        regs.pc = get_r16_group1(R16_Group1::HL);
                         break;
-                    case 7: // LD SP, HL (0xF9)
+                    case 3: // LD SP, HL (0xF9)
                         regs.sp = get_r16_group1(R16_Group1::HL);
                         break;
                 }
@@ -89,12 +131,26 @@ void Cpu::execute_x3_instructions() {
             }
             break;
             
-        case 2: // JP conditional
+        case 2: 
             if (opcode.y < 4) {
                 ConditionCode cc = static_cast<ConditionCode>(opcode.y);
                 if (check_condition(cc)) {
                     regs.pc = fetched_data;
                 }
+            }
+            else if (opcode.y == 6)
+            {
+                //LD A, (C)
+                uint8_t addr = regs.c;
+                uint8_t value = bus.bus_read(0xFF00 + addr);
+                write_r8(R8::A, value);
+            }
+            else if (opcode.y == 7)
+            {
+                //LD A, (u16)
+                uint8_t value = bus.bus_read(fetched_data);
+                write_r8(R8::A, value);
+                
             }
             break;
             
