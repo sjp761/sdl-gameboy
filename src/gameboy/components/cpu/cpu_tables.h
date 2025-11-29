@@ -1,7 +1,17 @@
-#include "cpu.h"
+#pragma once
+
+// Instruction metadata for cycle timing and length
+struct InstructionInfo {
+    char length;        // Instruction length in bytes (1-3)
+    char cycles;        // Base cycle count
+    char cycles_branch; // Cycle count if branch taken (0 if not conditional)
+    char imm_size;      // 0, 1, or 2 bytes
+};
+
+
 
 // Static instruction metadata table - defines length, cycles, and immediate data for each opcode
-const InstructionInfo Cpu::INSTRUCTION_TABLE[256] = {
+const InstructionInfo INSTRUCTION_TABLE[256] = {
     // 0x00-0x0F
     {1, 4, 0, 0},  // 0x00 NOP
     {3, 12, 0, 2},  // 0x01 LD BC, u16

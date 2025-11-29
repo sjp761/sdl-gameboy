@@ -3,6 +3,7 @@
 #include "cpu.h"
 #include "bus.h"
 #include <memory>
+#include "timer.h"
 
 struct emu_context 
 {
@@ -17,17 +18,18 @@ class Emu
         Rom rom;
         Bus bus;
         Cpu cpu;
+        Timer timer;
         
     public:
         emu_context ctx;
         
         Emu();
-        void emu_cycles(int cycles);
         
         // Accessors for components
         Rom& get_rom() { return rom; }
         Bus& get_bus() { return bus; }
         Cpu& get_cpu() { return cpu; }
+        void emu_cycles();
         const Rom& get_rom() const { return rom; }
         const Bus& get_bus() const { return bus; }
         const Cpu& get_cpu() const { return cpu; }

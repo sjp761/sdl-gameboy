@@ -2,6 +2,7 @@
 #include <cstdint>
 #include "cpu_types.h"
 #include <interrupts.h>
+#include "cpu_tables.h"
 
 struct Opcode
 {
@@ -11,14 +12,6 @@ struct Opcode
     uint8_t z;
     Opcode(uint8_t op) : whole(op), x((op >> 6) & 0x03), y((op >> 3) & 0x07), z(op & 0x07) {}
     Opcode() : whole(0), x(0), y(0), z(0) {}
-};
-
-// Instruction metadata for cycle timing and length
-struct InstructionInfo {
-    char length;        // Instruction length in bytes (1-3)
-    char cycles;        // Base cycle count
-    char cycles_branch; // Cycle count if branch taken (0 if not conditional)
-    char imm_size;      // 0, 1, or 2 bytes
 };
 
 struct cpu_registers
@@ -112,18 +105,15 @@ class Cpu
         void handle_interrupts();
 
         void interrupt_set_pc(uint16_t address);
-
-        // Static instruction metadata table
-        static const InstructionInfo INSTRUCTION_TABLE[256];
         
     public:
         Cpu(Bus& bus_ref);
         void cpu_init();
         bool cpu_step();
         void fetch_data();
-        void emu_cycles();
         void fetch_instruction();
         void execute_instruction();
+        void read_serial_debug();
         cpu_registers regs;
         uint16_t fetched_data;
         uint16_t mem_dest;

@@ -48,6 +48,7 @@ bool Cpu::cpu_step()
         ime = true;
         ime_delay = false;
     }
+    read_serial_debug();
     return true;
 }
 
@@ -66,10 +67,6 @@ void Cpu::fetch_data()
             fetched_data = 0;
             break;
     }
-}
-
-void Cpu::emu_cycles()
-{
 }
 
 void Cpu::fetch_instruction()
@@ -102,6 +99,21 @@ void Cpu::execute_instruction()
             execute_x3_instructions();
             break;
     }
+}
+
+void Cpu::read_serial_debug()
+{
+    if (bus.bus_read (0xFF02) == 0x81) 
+     {
+        char c = static_cast<char>(bus.bus_read(0xFF01));
+        bus.serial_buffer += c;
+        if (c == '\n' || bus.serial_buffer.length() >= 128) 
+        {
+            std::cout << bus.serial_buffer;
+            bus.serial_buffer.clear();
+        }
+        bus.bus_write(0xFF02, 0x00); // Clear the transfer start flag
+     }
 }
 
 void Cpu::handle_interrupts()
