@@ -1,6 +1,17 @@
 #include "cpu.h"
 #include "bus.h"
 
+//  Stack Operations
+uint8_t Cpu::stack_pop8() {
+    return bus.bus_read(regs.sp++);
+}
+
+uint16_t Cpu::stack_pop16() {
+    uint8_t low = stack_pop8();   // Pop low byte first
+    uint8_t high = stack_pop8();  // Pop high byte
+    return (static_cast<uint16_t>(high) << 8) | low;
+}
+
 //  Specific Instruction Handlers for x3 group 
 void Cpu::handle_alu_imm8() {
     AluOp op = static_cast<AluOp>(opcode.y);
@@ -25,32 +36,26 @@ void Cpu::handle_jp_and_interrupts() {
 void Cpu::handle_ret_conditional() {
     ConditionCode cc = static_cast<ConditionCode>(opcode.y);
     if (check_condition(cc)) {
-        uint8_t low = bus.bus_read(regs.sp++);
-        uint8_t high = bus.bus_read(regs.sp++);
-        regs.pc = (static_cast<uint16_t>(high) << 8) | low;
+        regs.pc = stack_pop16();
     }
 }
 
 void Cpu::handle_pop_r16() {
     R16_Group3 reg = static_cast<R16_Group3>(opcode.y >> 1);
-    uint8_t low = bus.bus_read(regs.sp++);
-    uint8_t high = bus.bus_read(regs.sp++);
-    uint16_t value = (static_cast<uint16_t>(high) << 8) | low;
+    uint16_t value = stack_pop16();
     set_r16_group3(reg, value);
 }
 
 void Cpu::handle_push_r16() {
     R16_Group3 reg = static_cast<R16_Group3>(opcode.y >> 1);
     uint16_t value = get_r16_group3(reg);
-    bus.bus_write(--regs.sp, value >> 8);
-    bus.bus_write(--regs.sp, value & 0xFF);
+    stack_push16(value);
 }
 
 void Cpu::handle_call_conditional() {
     ConditionCode cc = static_cast<ConditionCode>(opcode.y);
     if (check_condition(cc)) {
-        bus.bus_write(--regs.sp, regs.pc >> 8);
-        bus.bus_write(--regs.sp, regs.pc & 0xFF);
+        stack_push16(regs.pc);
         regs.pc = fetched_data;
     }
 }
@@ -110,19 +115,11 @@ void Cpu::execute_x3_instructions() {
                 switch (opcode.y >> 1) 
                 {
                     case 0: // RET (0xC9)
-                        {
-                            uint8_t low = bus.bus_read(regs.sp++);
-                            uint8_t high = bus.bus_read(regs.sp++);
-                            regs.pc = (static_cast<uint16_t>(high) << 8) | low;
-                        }
+                        regs.pc = stack_pop16();
                         break;
                     case 1: // RETI (0xD9)
-                        {
-                            uint8_t low = bus.bus_read(regs.sp++);
-                            uint8_t high = bus.bus_read(regs.sp++);
-                            regs.pc = (static_cast<uint16_t>(high) << 8) | low;
-                            ime = true;
-                        }
+                        regs.pc = stack_pop16();
+                        ime = true;
                         break;
                     case 2: // JP HL (0xE9)
                         regs.pc = get_r16_group1(R16_Group1::HL);
@@ -188,8 +185,7 @@ void Cpu::execute_x3_instructions() {
             if (opcode.y & 1) {
                 // CALL (0xCD) for y=1
                 if (opcode.y == 1) {
-                    bus.bus_write(--regs.sp, regs.pc >> 8);
-                    bus.bus_write(--regs.sp, regs.pc & 0xFF);
+                    stack_push16(regs.pc);
                     regs.pc = fetched_data;
                 }
                 // Other odd y values: CB prefix or not used
@@ -206,8 +202,7 @@ void Cpu::execute_x3_instructions() {
         case 7: // RST (restart)
             {
                 uint8_t rst_addr = opcode.y * 8;
-                bus.bus_write(--regs.sp, regs.pc >> 8);
-                bus.bus_write(--regs.sp, regs.pc & 0xFF);
+                stack_push16(regs.pc);
                 regs.pc = rst_addr;
             }
             break;

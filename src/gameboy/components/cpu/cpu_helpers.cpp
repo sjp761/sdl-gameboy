@@ -1,7 +1,6 @@
 #include "cpu.h"
 #include "bus.h"
 
-// ===== R8 Helper Methods =====
 uint8_t* Cpu::get_r8_ptr(R8 reg) {
     uint8_t* table[8] = {
         &regs.b, &regs.c, &regs.d, &regs.e,
@@ -27,7 +26,6 @@ void Cpu::write_r8(R8 reg, uint8_t value) {
     }
 }
 
-// ===== R16 Group 1 Helper Methods (BC, DE, HL, SP) =====
 uint16_t Cpu::get_r16_group1(R16_Group1 reg) {
     switch (reg) {
         case R16_Group1::BC: return (static_cast<uint16_t>(regs.b) << 8) | regs.c;

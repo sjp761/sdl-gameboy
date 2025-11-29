@@ -1,3 +1,5 @@
+#pragma once
+
 namespace configuration
 {
     int WINDOW_WIDTH = 160;

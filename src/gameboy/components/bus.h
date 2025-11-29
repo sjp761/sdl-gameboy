@@ -28,4 +28,5 @@ class Bus
         uint8_t oam_io[MemoryMap::OAM_IO_SIZE] = {}; // OAM + I/O (0xFE00-0xFF7F)
         uint8_t high_ram[MemoryMap::HRAM_SIZE] = {}; // 127 bytes High RAM (0xFF80-0xFFFE)
         uint8_t ie_register = 0; // Interrupt Enable register (0xFFFF)
+        uint8_t if_register = 0; // Interrupt Flag register (0xFF0F)
 };

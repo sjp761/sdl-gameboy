@@ -6,7 +6,7 @@ int main(int argc, char* argv[])
 {
     Emu emu; // Create emulator instance
     
-    emu.get_rom().cart_load("/Users/user/Documents/sdl-gameboy/roms/cpu_instrs.gb");
+    emu.get_rom().cart_load("/Users/user/Documents/sdl-gameboy/roms/dmg-acid2.gb");
 
     emu.ctx.running = true;
     emu.ctx.paused = false;
@@ -21,7 +21,6 @@ int main(int argc, char* argv[])
 
         if (!emu.get_cpu().cpu_step()) {
             printf("CPU Stopped\n");
-            return -3;
         }
 
         emu.ctx.ticks++;

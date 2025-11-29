@@ -1,6 +1,8 @@
 #include "cpu.h"
 #include "bus.h"
 #include <iostream>
+#include <cstdio>
+#include <interrupts.h>
 
 Cpu::Cpu(Bus& bus_ref) : bus(bus_ref), fetched_data(0), mem_dest(0), halted(false), stepping(false), ime(true) {}
 
@@ -12,24 +14,41 @@ void Cpu::cpu_init()
 
 bool Cpu::cpu_step()
 {
+    // Capture delayed IME enable at start of step (EI effect happens after NEXT instruction)
+    bool enable_ime_after = ime_delay;
+
     if (!halted)
     {
-        // Check if IME should be enabled from previous EI instruction
-        bool enable_ime_after = ime_delay;
-        
         fetch_instruction();
         fetch_data();
         execute_instruction();
-        
-        // Apply IME change after instruction execution (from previous EI)
-        if (enable_ime_after) {
-            ime = true;
-            ime_delay = false;
-        }
-        
-        return true; // Indicate that a step was executed
+        /*
+        printf("PC: 0x%04X | Opcode: 0x%02X | A: 0x%02X | F: 0x%02X | BC: 0x%04X | DE: 0x%04X | HL: 0x%04X | SP: 0x%04X\n",
+           regs.pc - 1, opcode.whole, regs.a, regs.f,
+           (regs.b << 8) | regs.c, (regs.d << 8) | regs.e,
+           (regs.h << 8) | regs.l, regs.sp);
+        */
+
     }
-    return false; // Indicate that no step was executed
+    else
+    {
+        if (bus.if_register)
+        {
+            halted = false; // Exit halt state if an interrupt is pending
+        }
+    }
+        
+
+    if (ime)
+    {
+        handle_interrupts();
+    }
+    // Apply EI delayed enable only if it was pending BEFORE this step started
+    if (enable_ime_after) {
+        ime = true;
+        ime_delay = false;
+    }
+    return true;
 }
 
 void Cpu::fetch_data()
@@ -56,6 +75,8 @@ void Cpu::emu_cycles()
 void Cpu::fetch_instruction()
 {
     opcode = Opcode(bus.bus_read(regs.pc++));
+    
+    // Debug output
 }
 
 void Cpu::execute_instruction()
@@ -81,4 +102,45 @@ void Cpu::execute_instruction()
             execute_x3_instructions();
             break;
     }
+}
+
+void Cpu::handle_interrupts()
+{   
+    // Check interrupts in priority order
+    if (check_interrupt(Interrupts::InterruptMask::IT_VBlank)) return;
+    if (check_interrupt(Interrupts::InterruptMask::IT_LCDStat)) return;
+    if (check_interrupt(Interrupts::InterruptMask::IT_Timer)) return;
+    if (check_interrupt(Interrupts::InterruptMask::IT_Serial)) return;
+    if (check_interrupt(Interrupts::InterruptMask::IT_Joypad)) return;
+}
+
+void Cpu::interrupt_set_pc(uint16_t address)
+{
+    stack_push16(regs.pc);
+    regs.pc = address;
+}
+
+bool Cpu::check_interrupt(Interrupts::InterruptMask it)
+{
+    if ((bus.if_register & static_cast<uint8_t>(it)) && (bus.ie_register & static_cast<uint8_t>(it))) {
+        interrupt_set_pc(Interrupts::InterruptPC[it]);
+        bus.if_register &= ~static_cast<uint8_t>(it); // Clear the interrupt flag
+        ime = false; // Disable further interrupts
+        ime_delay = false; // Cancel any pending EI enable when servicing
+        halted = false;
+
+        return true;
+    }
+    return false;
+}
+
+
+//  Stack Operations
+void Cpu::stack_push8(uint8_t value) {
+    bus.bus_write(--regs.sp, value);
+}
+
+void Cpu::stack_push16(uint16_t value) {
+    stack_push8(value >> 8);   // Push high byte first
+    stack_push8(value & 0xFF); // Push low byte
 }

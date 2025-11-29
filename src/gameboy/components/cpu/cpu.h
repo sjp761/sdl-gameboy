@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include "cpu_types.h"
+#include <interrupts.h>
 
 struct Opcode
 {
@@ -77,6 +78,12 @@ class Cpu
         void set_flags_dec(uint8_t result, uint8_t original);
         void set_flags_inc(uint8_t result, uint8_t original);
         
+        // Stack operations
+        void stack_push8(uint8_t value);
+        void stack_push16(uint16_t value);
+        uint8_t stack_pop8();
+        uint16_t stack_pop16();
+        
         // Instruction group handlers
         void execute_x0_instructions();
         void execute_x1_instructions();
@@ -100,7 +107,12 @@ class Cpu
         void handle_pop_r16();
         void handle_push_r16();
         void handle_call_conditional();
-        
+
+        bool check_interrupt(Interrupts::InterruptMask it);
+        void handle_interrupts();
+
+        void interrupt_set_pc(uint16_t address);
+
         // Static instruction metadata table
         static const InstructionInfo INSTRUCTION_TABLE[256];
         
