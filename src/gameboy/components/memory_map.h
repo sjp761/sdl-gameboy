@@ -47,6 +47,8 @@ namespace MemoryMap {
     
     // Interrupt Enable Register
     constexpr uint16_t IE_REGISTER = 0xFFFF;
+    // Interrupt Flag Register
+    constexpr uint16_t IF_REGISTER = 0xFF0F;
     
     // Serial Port Registers
     constexpr uint16_t SERIAL_DATA = 0xFF01;      // SB - Serial transfer data

@@ -96,6 +96,11 @@ void Bus::oam_io_write(uint16_t address, uint8_t value)
         timer->write(address, value);
         return;
     }
+    // Interrupt Flag (IF) register at 0xFF0F is special: store in if_register
+    if (address == MemoryMap::IF_REGISTER) {
+        if_register = value;
+        return;
+    }
     oam_io[address - MemoryMap::OAM_IO_START] = value;
 }
 
@@ -106,8 +111,12 @@ uint8_t Bus::vram_read(uint16_t address)
 
 uint8_t Bus::oam_io_read(uint16_t address)
 {
-    if (timer &&address >= 0xFF04 && address <= 0xFF07) 
+    if (timer && address >= 0xFF04 && address <= 0xFF07) 
         return timer->read(address);
+    // Interrupt Flag (IF) register at 0xFF0F: read from if_register
+    if (address == MemoryMap::IF_REGISTER) {
+        return if_register;
+    }
     return oam_io[address - MemoryMap::OAM_IO_START];
 }
 
