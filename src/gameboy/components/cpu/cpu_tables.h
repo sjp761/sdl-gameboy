@@ -10,7 +10,7 @@ struct InstructionInfo {
 
 
 
-// Static instruction metadata table - defines length, cycles, and immediate data for each opcode
+// Static instruction metadata table - defines length, t states (m cycles * 4), and immediate data for each opcode
 const InstructionInfo INSTRUCTION_TABLE[256] = {
     // 0x00-0x0F
     {1, 4, 0, 0},  // 0x00 NOP
