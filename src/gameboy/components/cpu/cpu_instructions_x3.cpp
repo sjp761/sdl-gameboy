@@ -3,7 +3,7 @@
 
 //  Stack Operations
 uint8_t Cpu::stack_pop8() {
-    return bus.bus_read(regs.sp++);
+    return bus->bus_read(regs.sp++);
 }
 
 uint16_t Cpu::stack_pop16() {
@@ -84,7 +84,7 @@ void Cpu::execute_x3_instructions() {
             {
                 //LDH A, (u8)
                 uint8_t addr = static_cast<uint8_t>(fetched_data);
-                uint8_t value = bus.bus_read(0xFF00 + addr);
+                uint8_t value = bus->bus_read(0xFF00 + addr);
                 write_r8(R8::A, value);
             }
             else if (opcode.y == 7)
@@ -104,7 +104,7 @@ void Cpu::execute_x3_instructions() {
                 // LD (a8), A
                 uint8_t addr = static_cast<uint8_t>(fetched_data);
                 uint8_t value = read_r8(R8::A);
-                bus.bus_write(0xFF00 + addr, value);
+                bus->bus_write(0xFF00 + addr, value);
             }
 
             break;
@@ -145,13 +145,13 @@ void Cpu::execute_x3_instructions() {
             {
                 //LD A, (C)
                 uint8_t addr = regs.c;
-                uint8_t value = bus.bus_read(0xFF00 + addr);
+                uint8_t value = bus->bus_read(0xFF00 + addr);
                 write_r8(R8::A, value);
             }
             else if (opcode.y == 7)
             {
                 //LD A, (u16)
-                uint8_t value = bus.bus_read(fetched_data);
+                uint8_t value = bus->bus_read(fetched_data);
                 write_r8(R8::A, value);
                 
             }
@@ -160,14 +160,14 @@ void Cpu::execute_x3_instructions() {
                 //LD (u16), A
                 uint16_t addr = fetched_data;
                 uint8_t value = read_r8(R8::A);
-                bus.bus_write(addr, value);
+                bus->bus_write(addr, value);
             }
             else if (opcode.y == 4)
             {
                 //LD (C), A
                 uint8_t addr = regs.c;
                 uint8_t value = read_r8(R8::A);
-                bus.bus_write(0xFF00 + addr, value);
+                bus->bus_write(0xFF00 + addr, value);
             }
             break;
             

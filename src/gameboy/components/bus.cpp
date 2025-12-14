@@ -5,18 +5,15 @@
 #include <cstdio>
 #include <iostream>
 
-Bus::Bus(Rom& rom_ref) : rom(rom_ref) {}
+Bus::Bus() : rom(nullptr), timer(nullptr), ie_register(0), if_register(0)
+{}
 
-void Bus::attach_timer(Timer& timer_ref)
-{
-    timer = &timer_ref;
-}
 
 uint8_t Bus::bus_read(uint16_t address)
 {
     if (MemoryMap::is_rom(address))
     {
-        return rom.cart_read(address);
+        return rom->cart_read(address);
     }
     else if (MemoryMap::is_vram(address))
     {
@@ -52,7 +49,7 @@ void Bus::bus_write(uint16_t address, uint8_t data)
 {
     if (MemoryMap::is_rom(address))
     {
-        rom.cart_write(address, data);
+        rom->cart_write(address, data);
     }
     else if (MemoryMap::is_vram(address))
     {

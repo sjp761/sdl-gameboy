@@ -5,7 +5,7 @@
 int main(int argc, char* argv[])
 {
     Emu emu; // Create emulator instance
-    
+    emu.set_component_pointers(); // Set up component pointers
     emu.get_rom().cart_load("/Users/user/Documents/sdl-gameboy/roms/cpu_instrs.gb");
 
     emu.ctx.running = true;

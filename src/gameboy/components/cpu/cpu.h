@@ -33,7 +33,7 @@ class Bus; // Forward declaration
 class Cpu
 {
     private:
-        Bus& bus;
+        Bus* bus;
         
         // Helper methods for instruction tables
         uint8_t* get_r8_ptr(R8 reg);
@@ -107,7 +107,9 @@ class Cpu
         void interrupt_set_pc(uint16_t address);
         
     public:
-        Cpu(Bus& bus_ref);
+        Cpu();
+        // Set component pointers
+        void set_cmp(Bus* bus_ptr) { bus = bus_ptr; }
         void cpu_init();
         bool cpu_step();
         void fetch_data();

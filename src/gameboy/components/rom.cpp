@@ -6,6 +6,10 @@
 #include <iomanip>
 #include "emu.h"
 
+Rom::Rom()
+{
+}
+
 bool Rom::cart_load(const std::string &filename)
 {
     namespace fs = std::filesystem;

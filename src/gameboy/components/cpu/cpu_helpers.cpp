@@ -12,7 +12,7 @@ uint8_t* Cpu::get_r8_ptr(R8 reg) {
 uint8_t Cpu::read_r8(R8 reg) {
     if (reg == R8::HL_IND) {
         uint16_t hl = (static_cast<uint16_t>(regs.h) << 8) | regs.l;
-        return bus.bus_read(hl);
+        return bus->bus_read(hl);
     }
     return *get_r8_ptr(reg);
 }
@@ -20,7 +20,7 @@ uint8_t Cpu::read_r8(R8 reg) {
 void Cpu::write_r8(R8 reg, uint8_t value) {
     if (reg == R8::HL_IND) {
         uint16_t hl = (static_cast<uint16_t>(regs.h) << 8) | regs.l;
-        bus.bus_write(hl, value);
+        bus->bus_write(hl, value);
     } else {
         *get_r8_ptr(reg) = value;
     }
@@ -129,17 +129,17 @@ bool Cpu::check_condition(ConditionCode cc) {
 
 // ===== Immediate Data Reading Helpers =====
 uint8_t Cpu::read_imm8() {
-    return bus.bus_read(regs.pc++);
+    return bus->bus_read(regs.pc++);
 }
 
 uint16_t Cpu::read_imm16() {
-    uint8_t low = bus.bus_read(regs.pc++);
-    uint8_t high = bus.bus_read(regs.pc++);
+    uint8_t low = bus->bus_read(regs.pc++);
+    uint8_t high = bus->bus_read(regs.pc++);
     return (static_cast<uint16_t>(high) << 8) | low;
 }
 
 int8_t Cpu::read_imm_signed8() {
-    return static_cast<int8_t>(bus.bus_read(regs.pc++));
+    return static_cast<int8_t>(bus->bus_read(regs.pc++));
 }
 
 // ===== Flag Manipulation Helpers =====

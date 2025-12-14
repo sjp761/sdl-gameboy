@@ -8,12 +8,13 @@ class Rom; // Forward declaration
 class Bus
 {
     private:
-        Rom& rom;
-        Timer* timer = nullptr; // Optional timer reference
+        Rom* rom;
+        Timer* timer; // Optional timer reference
         
     public:
-        Bus(Rom& rom_ref);
-        void attach_timer(Timer& timer_ref);
+        Bus();
+        // Set component pointers
+        void set_cmp(Rom* rom_ptr, Timer* timer_ptr) { rom = rom_ptr; timer = timer_ptr; }
         uint8_t bus_read(uint16_t address);
         void bus_write(uint16_t address, uint8_t data);
         void exram_write(uint16_t address, uint8_t value);

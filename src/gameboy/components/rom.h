@@ -133,6 +133,7 @@ static const std::unordered_map<uint8_t, std::string> LIC_CODE = {
 class Rom
 {
     public:
+        Rom();
         bool cart_load(const std::string &filename);
         cart_context ctx;
         std::string cart_lic_name();

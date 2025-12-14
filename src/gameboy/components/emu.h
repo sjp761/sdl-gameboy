@@ -1,6 +1,6 @@
 #pragma once
 #include "rom.h"
-#include "cpu.h"
+#include "cpu/cpu.h"
 #include "bus.h"
 #include <memory>
 #include "timer.h"
@@ -30,6 +30,7 @@ class Emu
         Bus& get_bus() { return bus; }
         Cpu& get_cpu() { return cpu; }
         void emu_cycles();
+        void set_component_pointers();
         const Rom& get_rom() const { return rom; }
         const Bus& get_bus() const { return bus; }
         const Cpu& get_cpu() const { return cpu; }

@@ -46,14 +46,14 @@ void Cpu::handle_ld_indirect() {
     if (opcode.y & 1)
     {
         //LD A, (r16)
-        uint8_t value = bus.bus_read(addr);
+        uint8_t value = bus->bus_read(addr);
         write_r8(R8::A, value);
     }
     else
     {
         //LD (r16), A
         uint8_t value = read_r8(R8::A);
-        bus.bus_write(addr, value);
+        bus->bus_write(addr, value);
     }
 }
 
@@ -70,8 +70,8 @@ void Cpu::execute_x0_instructions() {
                 // LD (a16), SP - store SP at 16-bit address (little-endian)
                 uint8_t lo = regs.sp & 0xFF;
                 uint8_t hi = (regs.sp >> 8) & 0xFF;
-                bus.bus_write(fetched_data, lo);
-                bus.bus_write(fetched_data + 1, hi);
+                bus->bus_write(fetched_data, lo);
+                bus->bus_write(fetched_data + 1, hi);
             }
             else if (opcode.y == 3)
             {

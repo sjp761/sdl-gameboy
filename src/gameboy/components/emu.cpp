@@ -1,17 +1,14 @@
 #include "emu.h"
 #include "cpu/cpu_tables.h"
 
-// Constructor initializes components in correct dependency order: Rom -> Bus -> Cpu
+// Constructor initializes pointers to nullptr
 Emu::Emu() 
     : rom(), 
-      bus(rom), 
-      cpu(bus),
-      timer(cpu, bus),
+      bus(),
+      cpu(),
+      timer(),
       ctx{false, true, 0}
-{
-  // Link bus to timer for MMIO/register interactions
-  bus.attach_timer(timer);
-}
+{}
 
 void Emu::emu_cycles()
 {
@@ -20,4 +17,11 @@ void Emu::emu_cycles()
     for (int i = 0; i < cycles; ++i) {
         timer.tick();
     }
+}
+
+void Emu::set_component_pointers()
+{
+  cpu.set_cmp(&bus);
+  bus.set_cmp(&rom, &timer);
+  timer.set_cmp(&cpu, &bus);
 }

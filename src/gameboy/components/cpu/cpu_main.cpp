@@ -4,7 +4,9 @@
 #include <cstdio>
 #include <interrupts.h>
 
-Cpu::Cpu(Bus& bus_ref) : bus(bus_ref), fetched_data(0), mem_dest(0), halted(false), stepping(false), ime(true) {}
+Cpu::Cpu()
+{
+}
 
 void Cpu::cpu_init()
 {
@@ -32,7 +34,7 @@ bool Cpu::cpu_step()
     }
     else
     {
-        if (bus.if_register)
+        if (bus->if_register)
         {
             halted = false; // Exit halt state if an interrupt is pending
         }
@@ -71,7 +73,7 @@ void Cpu::fetch_data()
 
 void Cpu::fetch_instruction()
 {
-    opcode = Opcode(bus.bus_read(regs.pc++));
+    opcode = Opcode(bus->bus_read(regs.pc++));
     
     // Debug output
 }
@@ -103,16 +105,16 @@ void Cpu::execute_instruction()
 
 void Cpu::read_serial_debug()
 {
-    if (bus.bus_read (0xFF02) == 0x81) 
+    if (bus->bus_read (0xFF02) == 0x81) 
      {
-        char c = static_cast<char>(bus.bus_read(0xFF01));
-        bus.serial_buffer += c;
-        if (c == '\n' || bus.serial_buffer.length() >= 128) 
+        char c = static_cast<char>(bus->bus_read(0xFF01));
+        bus->serial_buffer += c;
+        if (c == '\n' || bus->serial_buffer.length() >= 128) 
         {
-            std::cout << bus.serial_buffer;
-            bus.serial_buffer.clear();
+            std::cout << bus->serial_buffer;
+            bus->serial_buffer.clear();
         }
-        bus.bus_write(0xFF02, 0x00); // Clear the transfer start flag
+        bus->bus_write(0xFF02, 0x00); // Clear the transfer start flag
      }
 }
 
@@ -134,9 +136,9 @@ void Cpu::interrupt_set_pc(uint16_t address)
 
 bool Cpu::check_interrupt(Interrupts::InterruptMask it)
 {
-    if ((bus.if_register & static_cast<uint8_t>(it)) && (bus.ie_register & static_cast<uint8_t>(it))) {
+    if ((bus->if_register & static_cast<uint8_t>(it)) && (bus->ie_register & static_cast<uint8_t>(it))) {
         interrupt_set_pc(Interrupts::InterruptPC[it]);
-        bus.if_register &= ~static_cast<uint8_t>(it); // Clear the interrupt flag
+        bus->if_register &= ~static_cast<uint8_t>(it); // Clear the interrupt flag
         ime = false; // Disable further interrupts
         ime_delay = false; // Cancel any pending EI enable when servicing
         halted = false;
@@ -149,7 +151,7 @@ bool Cpu::check_interrupt(Interrupts::InterruptMask it)
 
 //  Stack Operations
 void Cpu::stack_push8(uint8_t value) {
-    bus.bus_write(--regs.sp, value);
+    bus->bus_write(--regs.sp, value);
 }
 
 void Cpu::stack_push16(uint16_t value) {

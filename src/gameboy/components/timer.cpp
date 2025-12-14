@@ -1,8 +1,7 @@
 #include "timer.h"
 
-Timer::Timer(Cpu& cpu_ref, Bus& bus_ref) : div(0), tima(0), tma(0), tac(0), cpu(cpu_ref), bus(bus_ref)
+Timer::Timer() : div(0), tima(0), tma(0), tac(0), cpu(nullptr), bus(nullptr)
 {
-
 }
 
 uint8_t Timer::read(uint16_t address)
@@ -70,7 +69,7 @@ void Timer::tick()
         {
             tima = 0;
             tima = tma;
-            bus.if_register |= static_cast<uint8_t>(Interrupts::InterruptMask::IT_Timer);
+            bus->if_register |= static_cast<uint8_t>(Interrupts::InterruptMask::IT_Timer);
         }
         else
         {

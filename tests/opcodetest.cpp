@@ -63,6 +63,7 @@ TestResult testOpcode(const std::string& opcodeHex, const std::string& jsonPath)
     for (int i = 0; i < root.size(); ++i) {
         // Create fresh emulator instance for each test
         Emu emu;
+        emu.set_component_pointers();
         emu.get_rom().create_blank_rom(0x8000);
         
         // Set initial state
