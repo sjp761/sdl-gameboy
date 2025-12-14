@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <interrupts.h>
 
-Cpu::Cpu()
+Cpu::Cpu() : bus(nullptr)
 {
 }
 
