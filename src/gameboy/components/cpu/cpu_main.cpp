@@ -1,10 +1,11 @@
 #include "cpu.h"
 #include "bus.h"
+#include "timer.h"
 #include <iostream>
 #include <cstdio>
 #include <interrupts.h>
 
-Cpu::Cpu() : bus(nullptr)
+Cpu::Cpu() : bus(nullptr), timer(nullptr)
 {
 }
 
@@ -22,6 +23,7 @@ bool Cpu::cpu_step()
     if (!halted)
     {
         fetch_instruction();
+        emu_cycles(4);
         fetch_data();
         execute_instruction();
         /*
@@ -30,10 +32,12 @@ bool Cpu::cpu_step()
            (regs.b << 8) | regs.c, (regs.d << 8) | regs.e,
            (regs.h << 8) | regs.l, regs.sp);
         */
-
     }
     else
     {
+        // During HALT, CPU consumes 4 T-cycles per iteration
+        emu_cycles(4);
+        
         if (bus->if_register)
         {
             halted = false; // Exit halt state if an interrupt is pending
@@ -51,6 +55,7 @@ bool Cpu::cpu_step()
         ime_delay = false;
     }
     read_serial_debug();
+
     return true;
 }
 
@@ -74,8 +79,6 @@ void Cpu::fetch_data()
 void Cpu::fetch_instruction()
 {
     opcode = Opcode(bus->bus_read(regs.pc++));
-    
-    // Debug output
 }
 
 void Cpu::execute_instruction()
@@ -116,6 +119,14 @@ void Cpu::read_serial_debug()
         }
         bus->bus_write(0xFF02, 0x00); // Clear the transfer start flag
      }
+}
+
+void Cpu::emu_cycles(int t_states)
+{
+
+    for (int i = 0; i < t_states; ++i) {
+        timer->tick();
+    }
 }
 
 void Cpu::handle_interrupts()

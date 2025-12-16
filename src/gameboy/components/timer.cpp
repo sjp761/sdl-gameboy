@@ -1,6 +1,6 @@
 #include "timer.h"
 
-Timer::Timer() : div(0), tima(0), tma(0), tac(0), cpu(nullptr), bus(nullptr)
+Timer::Timer() : div(0xAC00), tima(0), tma(0), tac(0), cpu(nullptr), bus(nullptr)
 {
 }
 
@@ -42,38 +42,40 @@ void Timer::write(uint16_t address, uint8_t value)
 
 void Timer::tick()
 {
-    div++;
-    
-    if (!(tac & 0x04)) return; // Timer not enabled
-    
-    bool update_timer = false;
-    switch (tac & 0x03)
-    {
-        case 0: // 1024 t-states
-            update_timer = (div % 1024) == 0;
+    uint16_t old_div = div++;
+
+    bool timer_update = false;
+    switch (tac & 0b11) {
+        case 0: // 4096 Hz
+            // Falling edge of bit 9 (from 1->0)
+            timer_update = (old_div & (1 << 9)) && !(div & (1 << 9));
             break;
-        case 1: // 16 t-states
-            update_timer = (div % 16) == 0;
+        case 1: // 262144 Hz
+            // Falling edge of bit 3
+            timer_update = (old_div & (1 << 3)) && !(div & (1 << 3));
             break;
-        case 2: // 64 t-states
-            update_timer = (div % 64) == 0;
+        case 2: // 65536 Hz
+            // Falling edge of bit 5
+            timer_update = (old_div & (1 << 5)) && !(div & (1 << 5));
             break;
-        case 3: // 256 t-states
-            update_timer = (div % 256) == 0;
+        case 3: // 16384 Hz
+            // Falling edge of bit 7
+            timer_update = (old_div & (1 << 7)) && !(div & (1 << 7));
             break;
     }
-    
-    if (update_timer)
+
+    if ((tac & 0b100) && timer_update) 
     {
-        if (tima == 0xFF)
+        uint8_t prev = tima;
+        tima++;
+        // TIMA overflow occurs when incrementing 0xFF -> 0x00
+        if (prev == 0xFF) 
         {
-            tima = 0;
             tima = tma;
-            bus->if_register |= static_cast<uint8_t>(Interrupts::InterruptMask::IT_Timer);
-        }
-        else
-        {
-            tima++;
+            // Request Timer Interrupt
+            if (bus) {
+                bus->if_register |= static_cast<uint8_t>(Interrupts::InterruptMask::IT_Timer);
+            }
         }
     }
 }

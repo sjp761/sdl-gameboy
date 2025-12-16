@@ -29,7 +29,6 @@ class Emu
         Rom& get_rom() { return rom; }
         Bus& get_bus() { return bus; }
         Cpu& get_cpu() { return cpu; }
-        void emu_cycles();
         void set_component_pointers();
         const Rom& get_rom() const { return rom; }
         const Bus& get_bus() const { return bus; }
