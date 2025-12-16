@@ -20,30 +20,30 @@ bool Cpu::cpu_step()
     // Capture delayed IME enable at start of step (EI effect happens after NEXT instruction)
     bool enable_ime_after = ime_delay;
 
+    // Print CPU state and next 4 bytes at PC before instruction
+    uint16_t pc = regs.pc;
+    printf(
+        "A: %02X F: %02X B: %02X C: %02X D: %02X E: %02X H: %02X L: %02X SP: %04X PC: %02X:%04X (%02X %02X %02X %02X)\n",
+        regs.a, regs.f, regs.b, regs.c, regs.d, regs.e, regs.h, regs.l, regs.sp, (pc >> 8) & 0xFF, pc,
+        bus->bus_read(pc), bus->bus_read(pc+1), bus->bus_read(pc+2), bus->bus_read(pc+3)
+    );
+
     if (!halted)
     {
         fetch_instruction();
         emu_cycles(4);
         fetch_data();
         execute_instruction();
-        /*
-        printf("PC: 0x%04X | Opcode: 0x%02X | A: 0x%02X | F: 0x%02X | BC: 0x%04X | DE: 0x%04X | HL: 0x%04X | SP: 0x%04X\n",
-           regs.pc - 1, opcode.whole, regs.a, regs.f,
-           (regs.b << 8) | regs.c, (regs.d << 8) | regs.e,
-           (regs.h << 8) | regs.l, regs.sp);
-        */
     }
     else
     {
         // During HALT, CPU consumes 4 T-cycles per iteration
         emu_cycles(4);
-        
         if (bus->if_register)
         {
             halted = false; // Exit halt state if an interrupt is pending
         }
     }
-        
 
     if (ime)
     {

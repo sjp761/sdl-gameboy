@@ -1,11 +1,12 @@
 #include "bus.h"
 #include "rom.h"
 #include "timer.h"
+#include "ppu.h"
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
 
-Bus::Bus() : rom(nullptr), timer(nullptr), ie_register(0), if_register(0)
+Bus::Bus() : rom(nullptr), timer(nullptr), ppu(nullptr), ie_register(0), if_register(0)
 {}
 
 
@@ -31,9 +32,13 @@ uint8_t Bus::bus_read(uint16_t address)
     {
         return echoram_read(address);
     }
-    else if (MemoryMap::is_oam_io(address))
+    else if (MemoryMap::is_io(address))
     {
-        return oam_io_read(address);
+        return io_read(address);
+    }
+    else if (MemoryMap::is_oam(address))
+    {
+        return oam_read(address);
     }
     else if (MemoryMap::is_hram(address))
     {
@@ -67,9 +72,13 @@ void Bus::bus_write(uint16_t address, uint8_t data)
     {
         echoram_write(address, data);
     }
-    else if (MemoryMap::is_oam_io(address))
+    else if (MemoryMap::is_io(address))
     {
-        oam_io_write(address, data);
+        io_write(address, data);
+    }
+    else if (MemoryMap::is_oam(address))
+    {
+        oam_write(address, data);
     }
     else if (MemoryMap::is_hram(address))
     {
@@ -86,7 +95,7 @@ void Bus::vram_write(uint16_t address, uint8_t value)
     vram[address - MemoryMap::VRAM_START] = value;
 }
 
-void Bus::oam_io_write(uint16_t address, uint8_t value)
+void Bus::io_write(uint16_t address, uint8_t value)
 {
     // Route timer register writes to Timer component when attached
     if (timer && (address >= 0xFF04 && address <= 0xFF07)) {
@@ -98,7 +107,13 @@ void Bus::oam_io_write(uint16_t address, uint8_t value)
         if_register = value;
         return;
     }
-    oam_io[address - MemoryMap::OAM_IO_START] = value;
+    io[address - MemoryMap::IO_START] = value;
+}
+
+void Bus::oam_write(uint16_t address, uint8_t value)
+{
+    uint8_t* data_ptr = (uint8_t*)&(ppu->oam) + (address - MemoryMap::OAM_START);
+    *data_ptr = value;
 }
 
 uint8_t Bus::vram_read(uint16_t address)
@@ -106,7 +121,7 @@ uint8_t Bus::vram_read(uint16_t address)
     return vram[address - MemoryMap::VRAM_START];
 }
 
-uint8_t Bus::oam_io_read(uint16_t address)
+uint8_t Bus::io_read(uint16_t address)
 {
     if (timer && address >= 0xFF04 && address <= 0xFF07) 
         return timer->read(address);
@@ -114,7 +129,12 @@ uint8_t Bus::oam_io_read(uint16_t address)
     if (address == MemoryMap::IF_REGISTER) {
         return if_register;
     }
-    return oam_io[address - MemoryMap::OAM_IO_START];
+    return io[address - MemoryMap::IO_START];
+}
+
+uint8_t Bus::oam_read(uint16_t address)
+{
+    return *((uint8_t*)&(ppu->oam) + (address - MemoryMap::OAM_START));
 }
 
 void Bus::exram_write(uint16_t address, uint8_t value) //For External RAM

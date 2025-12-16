@@ -34,11 +34,10 @@ namespace MemoryMap {
     // Object Attribute Memory (160 bytes) + I/O Registers
     constexpr uint16_t OAM_START  = 0xFE00;
     constexpr uint16_t OAM_END    = 0xFE9F;
+    constexpr uint16_t OAM_SIZE   = 0xA0;
     constexpr uint16_t IO_START   = 0xFF00;
     constexpr uint16_t IO_END     = 0xFF7F;
-    constexpr uint16_t OAM_IO_START = 0xFE00;
-    constexpr uint16_t OAM_IO_END   = 0xFF7F;
-    constexpr uint16_t OAM_IO_SIZE  = 0x0180;
+    constexpr uint16_t IO_SIZE    = 0x80;
     
     // High RAM (127 bytes) - Fast internal CPU RAM
     constexpr uint16_t HRAM_START = 0xFF80;
@@ -75,8 +74,13 @@ namespace MemoryMap {
         return address >= ECHO_START && address <= ECHO_END;
     }
     
-    inline bool is_oam_io(uint16_t address) {
-        return address >= OAM_IO_START && address <= OAM_IO_END;
+    inline bool is_io(uint16_t address) {
+        return address >= IO_START && address <= IO_END;
+    }
+
+    inline bool is_oam(uint16_t address) 
+    {
+        return address >= OAM_START && address <= OAM_END;
     }
     
     inline bool is_hram(uint16_t address) {

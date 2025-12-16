@@ -13,6 +13,7 @@ Emu::Emu()
 void Emu::set_component_pointers()
 {
   cpu.set_cmp(&bus, &timer);
-  bus.set_cmp(&rom, &timer);
+  bus.set_cmp(&rom, &timer, &ppu);
   timer.set_cmp(&cpu, &bus);
+  ppu.set_cmp(&bus);
 }
