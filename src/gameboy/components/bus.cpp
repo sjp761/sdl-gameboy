@@ -2,6 +2,7 @@
 #include "rom.h"
 #include "timer.h"
 #include "ppu.h"
+#include "dma.h"
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
@@ -105,6 +106,12 @@ void Bus::io_write(uint16_t address, uint8_t value)
     // Interrupt Flag (IF) register at 0xFF0F is special: store in if_register
     if (address == MemoryMap::IF_REGISTER) {
         if_register = value;
+        return;
+    }
+
+    if (address == 0xFF46 && dma) {
+        // Start DMA transfer
+        dma->start(value);
         return;
     }
     io[address - MemoryMap::IO_START] = value;

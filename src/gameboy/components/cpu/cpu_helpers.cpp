@@ -130,7 +130,7 @@ bool Cpu::check_condition(ConditionCode cc) {
 // ===== Immediate Data Reading Helpers =====
 uint8_t Cpu::read_imm8() {
     return bus->bus_read(regs.pc++);
-    emu_cycles(4);
+    emu_cycles(1);
 }
 
 uint16_t Cpu::read_imm16() {

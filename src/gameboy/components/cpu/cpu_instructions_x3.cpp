@@ -16,14 +16,14 @@ uint16_t Cpu::stack_pop16() {
 void Cpu::handle_alu_imm8() {
     AluOp op = static_cast<AluOp>(opcode.y);
     execute_alu_op(op, static_cast<uint8_t>(fetched_data));
-    emu_cycles(4); // total 8 for ALU A, u8
+    emu_cycles(1); // total 8 for ALU A, u8
 }
 
 void Cpu::handle_jp_and_interrupts() {
     switch (opcode.y) {
         case 0: // JP u16 (unconditional jump)
             regs.pc = fetched_data;
-            emu_cycles(12); // total 16
+            emu_cycles(3); // total 16
             break;
         case 6: // DI (0xF3) - Disable Interrupts
             ime = false;
@@ -41,9 +41,9 @@ void Cpu::handle_ret_conditional() {
     ConditionCode cc = static_cast<ConditionCode>(opcode.y);
     if (check_condition(cc)) {
         regs.pc = stack_pop16();
-        emu_cycles(16); // total 20 when taken
+        emu_cycles(4); // total 20 when taken
     } else {
-        emu_cycles(4); // total 8 when not taken
+        emu_cycles(1); // total 8 when not taken
     }
 }
 
@@ -51,14 +51,14 @@ void Cpu::handle_pop_r16() {
     R16_Group3 reg = static_cast<R16_Group3>(opcode.y >> 1);
     uint16_t value = stack_pop16();
     set_r16_group3(reg, value);
-    emu_cycles(8); // total 12
+    emu_cycles(2); // total 12
 }
 
 void Cpu::handle_push_r16() {
     R16_Group3 reg = static_cast<R16_Group3>(opcode.y >> 1);
     uint16_t value = get_r16_group3(reg);
     stack_push16(value);
-    emu_cycles(12); // total 16
+    emu_cycles(3); // total 16
 }
 
 void Cpu::handle_call_conditional() {
@@ -66,9 +66,9 @@ void Cpu::handle_call_conditional() {
     if (check_condition(cc)) {
         stack_push16(regs.pc);
         regs.pc = fetched_data;
-        emu_cycles(20); // total 24 when taken
+        emu_cycles(5); // total 24 when taken
     } else {
-        emu_cycles(8); // total 12 when not taken
+        emu_cycles(2); // total 12 when not taken
     }
 }
 
@@ -91,7 +91,7 @@ void Cpu::execute_x3_instructions() {
                 set_flag_h(((original & 0x0F) + (value & 0x0F)) > 0x0F);
                 set_flag_n(false);
                 set_flag_z(false);
-                emu_cycles(12); // total 16
+                emu_cycles(3); // total 16
             }
             else if (opcode.y == 6)
             {
@@ -99,7 +99,7 @@ void Cpu::execute_x3_instructions() {
                 uint8_t addr = static_cast<uint8_t>(fetched_data);
                 uint8_t value = bus->bus_read(0xFF00 + addr);
                 write_r8(R8::A, value);
-                emu_cycles(8); // total 12
+                emu_cycles(2); // total 12
             }
             else if (opcode.y == 7)
             {
@@ -111,7 +111,7 @@ void Cpu::execute_x3_instructions() {
                 set_flag_n(false);
                 set_flag_h(((original & 0x0F) + (offset & 0x0F)) > 0x0F);
                 set_flag_c(((original & 0xFF) + (offset & 0xFF)) > 0xFF);
-                emu_cycles(12); // total 16
+                emu_cycles(3); // total 16
 
             }
             else if (opcode.y == 4)
@@ -120,7 +120,7 @@ void Cpu::execute_x3_instructions() {
                 uint8_t addr = static_cast<uint8_t>(fetched_data);
                 uint8_t value = read_r8(R8::A);
                 bus->bus_write(0xFF00 + addr, value);
-                emu_cycles(8); // total 12
+                emu_cycles(2); // total 12
             }
 
             break;
@@ -132,20 +132,19 @@ void Cpu::execute_x3_instructions() {
                 {
                     case 0: // RET (0xC9)
                         regs.pc = stack_pop16();
-                        emu_cycles(12); // total 16
+                        emu_cycles(3); // total 16
                         break;
                     case 1: // RETI (0xD9)
                         regs.pc = stack_pop16();
                         ime = true;
-                        emu_cycles(12); // total 16
+                        emu_cycles(3); // total 16
                         break;
                     case 2: // JP HL (0xE9)
                         regs.pc = get_r16_group1(R16_Group1::HL);
-                        emu_cycles(0); // total 4
                         break;
                     case 3: // LD SP, HL (0xF9)
                         regs.sp = get_r16_group1(R16_Group1::HL);
-                        emu_cycles(4); // total 8
+                        emu_cycles(1); // total 8
                         break;
                 }
             } else {
@@ -159,9 +158,9 @@ void Cpu::execute_x3_instructions() {
                 ConditionCode cc = static_cast<ConditionCode>(opcode.y);
                 if (check_condition(cc)) {
                     regs.pc = fetched_data;
-                    emu_cycles(12); // total 16 when taken
+                    emu_cycles(3); // total 16 when taken
                 } else {
-                    emu_cycles(8); // total 12 when not taken
+                    emu_cycles(2); // total 12 when not taken
                 }
             }
             else if (opcode.y == 6)
@@ -170,14 +169,14 @@ void Cpu::execute_x3_instructions() {
                 uint8_t addr = regs.c;
                 uint8_t value = bus->bus_read(0xFF00 + addr);
                 write_r8(R8::A, value);
-                emu_cycles(4); // total 8
+                emu_cycles(1); // total 8
             }
             else if (opcode.y == 7)
             {
                 //LD A, (u16)
                 uint8_t value = bus->bus_read(fetched_data);
                 write_r8(R8::A, value);
-                emu_cycles(12); // total 16
+                emu_cycles(3); // total 16
                 
             }
             else if (opcode.y == 5)
@@ -186,7 +185,7 @@ void Cpu::execute_x3_instructions() {
                 uint16_t addr = fetched_data;
                 uint8_t value = read_r8(R8::A);
                 bus->bus_write(addr, value);
-                emu_cycles(12); // total 16
+                emu_cycles(3); // total 16
             }
             else if (opcode.y == 4)
             {
@@ -194,7 +193,7 @@ void Cpu::execute_x3_instructions() {
                 uint8_t addr = regs.c;
                 uint8_t value = read_r8(R8::A);
                 bus->bus_write(0xFF00 + addr, value);
-                emu_cycles(4); // total 8
+                emu_cycles(1); // total 8
             }
             break;
             
@@ -214,7 +213,7 @@ void Cpu::execute_x3_instructions() {
                 if (opcode.y == 1) {
                     stack_push16(regs.pc);
                     regs.pc = fetched_data;
-                    emu_cycles(24 - 4); // add 20 to reach total 24
+                    emu_cycles(5); // add 20 to reach total 24
                 }
                 // Other odd y values: CB prefix or not used
             } else {
@@ -232,7 +231,7 @@ void Cpu::execute_x3_instructions() {
                 uint8_t rst_addr = opcode.y * 8;
                 stack_push16(regs.pc);
                 regs.pc = rst_addr;
-                emu_cycles(12); // total 16
+                emu_cycles(3); // total 16
             }
             break;
     }

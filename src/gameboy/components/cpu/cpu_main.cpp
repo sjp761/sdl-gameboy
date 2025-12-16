@@ -1,11 +1,12 @@
 #include "cpu.h"
 #include "bus.h"
 #include "timer.h"
+#include "dma.h"
 #include <iostream>
 #include <cstdio>
 #include <interrupts.h>
 
-Cpu::Cpu() : bus(nullptr), timer(nullptr)
+Cpu::Cpu() : bus(nullptr), timer(nullptr), dma(nullptr)
 {
 }
 
@@ -31,14 +32,14 @@ bool Cpu::cpu_step()
     if (!halted)
     {
         fetch_instruction();
-        emu_cycles(4);
+        emu_cycles(1);
         fetch_data();
         execute_instruction();
     }
     else
     {
         // During HALT, CPU consumes 4 T-cycles per iteration
-        emu_cycles(4);
+        emu_cycles(1);
         if (bus->if_register)
         {
             halted = false; // Exit halt state if an interrupt is pending
@@ -121,11 +122,15 @@ void Cpu::read_serial_debug()
      }
 }
 
-void Cpu::emu_cycles(int t_states)
+void Cpu::emu_cycles(int m_cycles)
 {
-
-    for (int i = 0; i < t_states; ++i) {
+    for (int i = 0; i < m_cycles * 4; ++i) {
         timer->tick();
+    }
+    for (int i = 0; i < m_cycles; ++i) {
+        if (dma->is_active()) {
+            dma->tick();
+        }
     }
 }
 

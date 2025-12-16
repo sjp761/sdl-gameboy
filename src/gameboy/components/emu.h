@@ -5,6 +5,7 @@
 #include <memory>
 #include "timer.h"
 #include "ppu.h"
+#include "dma.h"
 
 struct emu_context 
 {
@@ -21,6 +22,7 @@ class Emu
         Cpu cpu;
         Timer timer;
         Ppu ppu;
+        DMA dma;
     public:
         emu_context ctx;
         

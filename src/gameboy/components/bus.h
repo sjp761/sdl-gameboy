@@ -5,17 +5,19 @@
 class Timer; // Forward declaration
 class Rom; // Forward declaration
 class Ppu; // Forward declaration
+class DMA;
 class Bus
 {
     private:
         Rom* rom;
         Timer* timer; // Optional timer reference
         Ppu* ppu; // Optional PPU reference
+        DMA* dma; // Optional DMA reference
         
     public:
         Bus();
         // Set component pointers
-        void set_cmp(Rom* rom_ptr, Timer* timer_ptr, Ppu* ppu_ptr) { rom = rom_ptr; timer = timer_ptr; ppu = ppu_ptr; }
+        void set_cmp(Rom* rom_ptr, Timer* timer_ptr, Ppu* ppu_ptr, DMA* dma_ptr) { rom = rom_ptr; timer = timer_ptr; ppu = ppu_ptr; dma = dma_ptr; }
         uint8_t bus_read(uint16_t address);
         void bus_write(uint16_t address, uint8_t data);
         void exram_write(uint16_t address, uint8_t value);

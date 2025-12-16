@@ -30,12 +30,14 @@ struct cpu_registers
 
 class Bus; // Forward declaration
 class Timer; // Forward declaration
+class DMA; // Forward declaration
 
 class Cpu
 {
     private:
         Bus* bus;
         Timer* timer;
+        DMA* dma;
         // Helper methods for instruction tables
         uint8_t* get_r8_ptr(R8 reg);
         uint8_t read_r8(R8 reg);
@@ -110,14 +112,14 @@ class Cpu
     public:
         Cpu();
         // Set component pointers
-        void set_cmp(Bus* bus_ptr, Timer* timer_ptr) { bus = bus_ptr; timer = timer_ptr; }
+        void set_cmp(Bus* bus_ptr, Timer* timer_ptr, DMA* dma_ptr) { bus = bus_ptr; timer = timer_ptr; dma = dma_ptr; }
         void cpu_init();
         bool cpu_step();
         void fetch_data();
         void fetch_instruction();
         void execute_instruction();
         void read_serial_debug();
-        void emu_cycles(int t_states);
+        void emu_cycles(int m_cycles);
         cpu_registers regs;
         uint16_t fetched_data;
         uint16_t mem_dest;

@@ -4,7 +4,7 @@
 //  Instruction Group Handler CB 
 void Cpu::execute_cb_instructions() {
     uint8_t cb_opcode = static_cast<uint8_t>(fetched_data);
-    emu_cycles(4);
+    emu_cycles(1);
     Opcode cb_op(cb_opcode);
     R8 reg = static_cast<R8>(cb_op.z);
     
