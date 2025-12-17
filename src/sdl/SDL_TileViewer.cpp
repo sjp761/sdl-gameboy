@@ -82,14 +82,16 @@ void SDL_TileViewer::render_tile(const uint8_t* vram, int tile_index, int x, int
     uint32_t pixels[TILE_SIZE * TILE_SIZE];
     
     // Decode tile data
-    for (int row = 0; row < TILE_SIZE; row++) {
-        uint8_t byte1 = vram[tile_address + (row * 2)];
+    for (int row = 0; row < TILE_SIZE; row++) 
+    {
+        uint8_t byte1 = vram[tile_address + (row * 2)]; //Each pixel is represented by 2 bits across 2 bytes
         uint8_t byte2 = vram[tile_address + (row * 2) + 1];
         
-        for (int col = 0; col < TILE_SIZE; col++) {
-            int bit = 7 - col;
-            uint8_t pixel_value = ((byte1 >> bit) & 1) | (((byte2 >> bit) & 1) << 1);
-            pixels[row * TILE_SIZE + col] = get_color(pixel_value);
+        for (int col = 0; col < TILE_SIZE; col++)
+        { // Process each pixel in the row
+            int bit = 7 - col; // The left most bit is for the left pixel, shift it to get the color info
+            uint8_t pixel_value = ((byte1 >> bit) & 1) | (((byte2 >> bit) & 1) << 1); //Each pixel is 2 bits for the color, the bits are swapped when determining the color so OR them to get the final value
+            pixels[row * TILE_SIZE + col] = get_color(pixel_value); 
         }
     }
     
