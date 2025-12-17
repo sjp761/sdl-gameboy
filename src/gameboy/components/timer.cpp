@@ -24,6 +24,7 @@ void Timer::write(uint16_t address, uint8_t value)
 {
     switch (address) {
         case 0xFF04: // DIV reset
+            old_div = div;
             div = 0;
             break;
         case 0xFF05: // TIMA

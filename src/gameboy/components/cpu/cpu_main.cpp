@@ -23,18 +23,18 @@ bool Cpu::cpu_step()
 
     // Print CPU state and next 4 bytes at PC before instruction
     uint16_t pc = regs.pc;
-    printf(
+    /*printf(
         "A: %02X F: %02X B: %02X C: %02X D: %02X E: %02X H: %02X L: %02X SP: %04X PC: %02X:%04X (%02X %02X %02X %02X)\n",
         regs.a, regs.f, regs.b, regs.c, regs.d, regs.e, regs.h, regs.l, regs.sp, (pc >> 8) & 0xFF, pc,
         bus->bus_read(pc), bus->bus_read(pc+1), bus->bus_read(pc+2), bus->bus_read(pc+3)
-    );
+    );*/
 
     if (!halted)
     {
         fetch_instruction();
-        emu_cycles(1);
         fetch_data();
         execute_instruction();
+        emu_cycles(INSTRUCTION_TABLE[opcode.whole].cycles/4);
     }
     else
     {

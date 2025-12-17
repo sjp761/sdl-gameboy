@@ -14,8 +14,8 @@ SDL_TileViewer::~SDL_TileViewer()
 void SDL_TileViewer::init()
 {
     // Calculate window dimensions for 24x16 tile grid
-    int window_width = TILES_PER_ROW * (SCALED_TILE_SIZE + PADDING) + PADDING;
-    int window_height = TILES_PER_COL * (SCALED_TILE_SIZE + PADDING) + PADDING;
+    int window_width = TILES_PER_ROW * SCALED_TILE_SIZE;
+    int window_height = TILES_PER_COL * SCALED_TILE_SIZE;
     
     window = SDL_CreateWindow("VRAM Tile Viewer (384 Tiles)", 
                               window_width, 
@@ -124,8 +124,8 @@ void SDL_TileViewer::update(const uint8_t* vram)
         int row = tile_idx / TILES_PER_ROW;
         int col = tile_idx % TILES_PER_ROW;
         
-        int x = col * (SCALED_TILE_SIZE + PADDING) + PADDING;
-        int y = row * (SCALED_TILE_SIZE + PADDING) + PADDING;
+        int x = col * SCALED_TILE_SIZE;
+        int y = row * SCALED_TILE_SIZE;
         
         render_tile(vram, tile_idx, x, y);
     }

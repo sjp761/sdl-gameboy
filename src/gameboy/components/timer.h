@@ -5,7 +5,7 @@
 
 class Timer
 {
-    uint16_t div;
+    uint16_t div, old_div;
     uint8_t tima, tma, tac;
     Cpu* cpu;
     Bus* bus;

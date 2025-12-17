@@ -27,7 +27,6 @@ private:
     static constexpr int TILES_PER_ROW = 24;
     static constexpr int TILES_PER_COL = 16;
     static constexpr int TOTAL_TILES = 384;
-    static constexpr int PADDING = 0; //Space between tiles
     
     void render_tile(const uint8_t* vram, int tile_index, int x, int y);
     uint32_t get_color(uint8_t pixel_value);
