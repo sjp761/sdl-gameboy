@@ -5,6 +5,11 @@
 #include <SDL3_image/SDL_image.h>
 #include "SDL_SmartPointer.h"
 
+#ifdef __APPLE__
+#include <objc/runtime.h>
+#include <objc/message.h>
+#endif
+
 namespace {
     constexpr int DEFAULT_WINDOW_WIDTH = 800;
     constexpr int DEFAULT_WINDOW_HEIGHT = 600;
@@ -25,7 +30,7 @@ void SDLContainer::initSDL()
    
     window = SDL_CreateWindow("SDL Window",
                               DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT,
-                              SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+                              SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_HIDDEN);
     if (!window) {
         printf("Unable to create SDL window: %s\n", SDL_GetError());
         return;
@@ -58,25 +63,41 @@ void SDLContainer::createNativeWindow()
         return;
     }
 
-    if (SDL_strcmp(driver, "x11") != 0) {
-        printf("Error: Not running on X11 (current driver: %s)\n", driver);
-        return;
-    }
 
     SDL_PropertiesID props = SDL_GetWindowProperties(window);
-    Sint64 xwindow = SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
-    if (xwindow == 0) {
-        printf("Error: Failed to get X11 window handle\n");
-        return;
+    if (SDL_strcmp(driver, "x11") == 0)
+    {
+        Sint64 xwindow = SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
+        if (xwindow == 0) 
+        {
+            printf("Error: Failed to get X11 window handle\n");
+            return;
+        }
+        embedded = QWindow::fromWinId(static_cast<WId>(xwindow));
+        if (!embedded) 
+        {
+            printf("Error: Failed to create QWindow from native handle\n");
+            return;
+        }
+    }
+    else if (SDL_strcmp(driver,"cocoa") == 0)
+    {
+        void* cocoaWindow = SDL_GetPointerProperty(props, "SDL.window.cocoa.window", nullptr);
+        if (!cocoaWindow) 
+        {
+            printf("Error: Failed to get Cocoa window pointer\n");
+            return;
+        }
+        
+        // Doing Objective-C message send to get the contentView, probably hacky but works
+        typedef void* (*contentViewFunc)(void*, SEL); // Creates a function pointer with generic and selector, returns void*
+        contentViewFunc contentView = (contentViewFunc)objc_msgSend; // Casts objc_msgSend to our function pointer type
+        void* nsView = contentView(cocoaWindow, sel_registerName("contentView")); // Calls [cocoaWindow contentView]
+        
+        embedded = QWindow::fromWinId(reinterpret_cast<WId>(nsView));
     }
 
-    embedded = QWindow::fromWinId(static_cast<WId>(xwindow));
-    if (!embedded) {
-        printf("Error: Failed to create QWindow from native handle\n");
-        return;
-    }
     
-    // Don't hide the window - the QWindow needs the SDL window to remain visible
     printf("Successfully created embedded QWindow\n");
 }
 
@@ -89,7 +110,6 @@ void SDLContainer::render()
     SDL_RenderClear(renderer);
     SDL_RenderTexture(renderer, texture.get(), NULL, NULL);
     SDL_RenderPresent(renderer);
-    std::cout << "Rendered SDL content" << std::endl;
 }
 
 void SDLContainer::resize(int width, int height)

@@ -7,8 +7,13 @@
 
 int main(int argc, char *argv[])
 {
-    setenv("QT_QPA_PLATFORM", "xcb", 1);
-    setenv("SDL_VIDEODRIVER", "x11", 1);
+    #ifdef __APPLE__
+        setenv("QT_QPA_PLATFORM", "cocoa", 1);
+        setenv("SDL_VIDEODRIVER", "cocoa", 1);
+    #else
+        setenv("QT_QPA_PLATFORM", "xcb", 1);
+        setenv("SDL_VIDEODRIVER", "x11", 1);
+    #endif
     QApplication a(argc, argv);
     MainWindow w;
     w.fillRecentSet();
