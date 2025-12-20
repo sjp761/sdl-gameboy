@@ -6,7 +6,7 @@ struct lcd_registers
 {
     //Gameboy specific LCD registers
     uint8_t lcd_control = 0b10010001; //FF40, Set enable LCD, BG display, and BG tile data area by default
-    uint8_t lcd_status;  //FF41
+    uint8_t lcd_status = 0b00000011;  //FF41, Default mode is 3 (pixel transfer)
     uint8_t scroll_y;    //FF42
     uint8_t scroll_x;    //FF43
     uint8_t lcd_y;       //FF44
@@ -73,7 +73,10 @@ class LCD
         LCD();
         lcd_registers regs;
         Ppu* ppu;
-        void set_cmp(Ppu* ppu_ptr);
+        Cpu* cpu;
+        void set_cmp(Ppu* ppu_ptr, Cpu* cpu_ptr);
         void lcd_write(uint16_t addr, uint8_t value);
         uint8_t lcd_read(uint16_t addr);
+        void bump_ly();
+        void set_mode(LCD_Modes mode);
 };

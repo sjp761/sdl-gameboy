@@ -134,6 +134,11 @@ void Cpu::emu_cycles(int m_cycles)
     }
 }
 
+void Cpu::request_interrupt(Interrupts::InterruptMask it)
+{
+    bus->if_register |= static_cast<uint8_t>(it); 
+}
+
 void Cpu::handle_interrupts()
 {   
     // Check interrupts in priority order

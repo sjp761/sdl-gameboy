@@ -120,6 +120,7 @@ class Cpu
         void execute_instruction();
         void read_serial_debug();
         void emu_cycles(int m_cycles);
+        void request_interrupt(Interrupts::InterruptMask it);
         cpu_registers regs;
         uint16_t fetched_data;
         uint16_t mem_dest;
