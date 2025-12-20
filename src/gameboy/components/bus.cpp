@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
+#include "lcd.h"
 
 Bus::Bus() : rom(nullptr), timer(nullptr), ppu(nullptr), ie_register(0), if_register(0)
 {}
@@ -48,6 +49,12 @@ uint8_t Bus::bus_read(uint16_t address)
         }
         return high_ram[address - MemoryMap::HRAM_START];
     }
+
+    else if (MemoryMap::is_lcd(address))
+    {
+        return lcd->lcd_read(address);
+    }
+
     return 0xFF; // Default for unmapped areas
 }
 
@@ -81,6 +88,12 @@ void Bus::bus_write(uint16_t address, uint8_t data)
     {
         oam_write(address, data);
     }
+
+    else if (MemoryMap::is_lcd(address))
+    {
+        lcd->lcd_write(address, data);
+    }
+
     else if (MemoryMap::is_hram(address))
     {
         if (address == MemoryMap::IE_REGISTER) {

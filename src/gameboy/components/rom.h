@@ -28,7 +28,7 @@ struct cart_context {
 };
 
 
-static const std::unordered_map<uint8_t, std::string> ROM_TYPES = {
+inline std::unordered_map<uint8_t, std::string> ROM_TYPES = { //Inline is used to avoid multiple definition errors
     {0x00, "ROM ONLY"},
     {0x01, "MBC1"},
     {0x02, "MBC1+RAM"},
@@ -66,7 +66,7 @@ static const std::unordered_map<uint8_t, std::string> ROM_TYPES = {
     {0x22, "MBC7+SENSOR+RUMBLE+RAM+BATTERY"},
 };
 
-static const std::unordered_map<uint8_t, std::string> LIC_CODE = {
+inline std::unordered_map<uint8_t, std::string> LIC_CODE = {
     {0x00, "None"},
     {0x01, "Nintendo R&D1"},
     {0x08, "Capcom"},

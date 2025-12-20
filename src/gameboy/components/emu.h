@@ -6,7 +6,7 @@
 #include "timer.h"
 #include "ppu.h"
 #include "dma.h"
-
+#include "lcd.h"
 struct emu_context 
 {
     bool paused;
@@ -23,6 +23,7 @@ class Emu
         Timer timer;
         Ppu ppu;
         DMA dma;
+        LCD lcd;
     public:
         emu_context ctx;
         

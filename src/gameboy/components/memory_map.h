@@ -49,6 +49,9 @@ namespace MemoryMap {
     // Interrupt Flag Register
     constexpr uint16_t IF_REGISTER = 0xFF0F;
     
+    constexpr uint16_t LCD_START = 0xFF40;      // LCD Control Register
+    constexpr uint16_t LCD_END   = 0xFF4B;      // LCD Window X Position + 1 Register
+
     // Serial Port Registers
     constexpr uint16_t SERIAL_DATA = 0xFF01;      // SB - Serial transfer data
     constexpr uint16_t SERIAL_CONTROL = 0xFF02;   // SC - Serial transfer control
@@ -85,5 +88,9 @@ namespace MemoryMap {
     
     inline bool is_hram(uint16_t address) {
         return address >= HRAM_START && address <= IE_REGISTER;
+    }
+    
+    inline bool is_lcd(uint16_t address) {
+        return address >= LCD_START && address <= LCD_END;
     }
 }
