@@ -125,10 +125,10 @@ void MainWindow::startEmulator(const std::string& romPath)
     
     emu_ref.store(new_emu);
     ui->centralwidget->emu_ref = new_emu;  // weak_ptr assignment
+    ui->centralwidget->tile_viewer_ptr = &tile_viewer;
     
     emuThread = std::thread([this]() {
         auto emu = emu_ref.load(); // Atomic load of shared_ptr
-        uint64_t last_tile_update = 0;
         
         while (emu->ctx.running) {
             if (emu->ctx.paused) { SDL_Delay(10); continue; }
@@ -136,18 +136,6 @@ void MainWindow::startEmulator(const std::string& romPath)
                 SDL_Delay(1);
             }
             emu->ctx.ticks++;
-            
-            // Update tile viewer periodically (every 16ms ~60fps)
-            if ((emu->ctx.ticks - last_tile_update) > 70224) { // ~60 times per second
-                std::lock_guard<std::mutex> tv_lock(tile_viewer_mutex);
-                if (tile_viewer.is_open()) {
-                    // Lock VRAM for reading
-                    std::lock_guard<std::mutex> vram_lock(emu->get_ppu().get_vram_mutex());
-                    tile_viewer.update(emu->get_ppu().get_vram_ptr());
-                    tile_viewer.render();
-                    last_tile_update = emu->ctx.ticks;
-                }
-            }
         }
     });
 }
@@ -155,7 +143,6 @@ void MainWindow::startEmulator(const std::string& romPath)
 void MainWindow::openTileViewer()
 {
     // This runs on the main thread (Qt's event loop thread)
-    std::lock_guard<std::mutex> lock(tile_viewer_mutex);
     if (!tile_viewer.is_open()) {
         tile_viewer.init();
     }

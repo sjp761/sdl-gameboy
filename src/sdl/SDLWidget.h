@@ -7,6 +7,7 @@
 #include <emu.h>
 
 class QTimer;
+class SDL_TileViewer;
 
 class SDLWidget : public QWidget
 {
@@ -16,6 +17,7 @@ public:
     SDLWidget(QWidget *parent = nullptr);
     ~SDLWidget();
     std::weak_ptr<Emu> emu_ref; // Weak pointer to emulator instance, set by MainWindow so it owns it
+    SDL_TileViewer* tile_viewer_ptr{nullptr};
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
 

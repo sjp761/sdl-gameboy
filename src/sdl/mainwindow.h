@@ -47,7 +47,6 @@ public slots:
 private:
     Ui::MainWindow *ui;
     std::thread emuThread;
-    std::mutex tile_viewer_mutex;  // Protects tile_viewer access
     void startEmulator(const std::string& romPath);
 };
 #endif // MAINWINDOW_H
