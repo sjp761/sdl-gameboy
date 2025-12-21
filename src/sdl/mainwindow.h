@@ -34,7 +34,8 @@ public:
     void fillRecentSet();
     void saveRecentSet();
     SDLWidget* getSDLWidget();
-    std::atomic<std::shared_ptr<Emu>> emu_ref;
+    std::shared_ptr<Emu> emu_ref;
+    std::mutex emu_ref_mutex; // Protects emu_ref access
     SDL_TileViewer tile_viewer;
 
 signals:

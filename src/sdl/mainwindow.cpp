@@ -29,13 +29,16 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     // Stop the emulator thread properly
-    auto emu = emu_ref.load();
+    std::shared_ptr<Emu> emu;
+    {
+        std::lock_guard<std::mutex> lock(emu_ref_mutex);
+        emu = emu_ref;
+    }
     if (emu) {
         emu->ctx.running = false;
     }
-    
     if (emuThread.joinable()) {
-        emuThread.join();  // Wait for the thread to finish before destroying the MainWindow, bool will make it stop
+        emuThread.join();
     }
     
     delete ui;
@@ -102,11 +105,14 @@ void MainWindow::handleRecentFileAction(QAction *action)
 void MainWindow::startEmulator(const std::string& romPath)
 {
     // Stop previous emulator if running
-    auto old_emu = emu_ref.load();
+    std::shared_ptr<Emu> old_emu;
+    {
+        std::lock_guard<std::mutex> lock(emu_ref_mutex);
+        old_emu = emu_ref;
+    }
     if (old_emu) {
         old_emu->ctx.running = false;
     }
-    
     if (emuThread.joinable()) {
         emuThread.join();
     }
@@ -122,14 +128,18 @@ void MainWindow::startEmulator(const std::string& romPath)
     new_emu->ctx.paused = false;
     new_emu->ctx.ticks = 0;
     new_emu->get_cpu().cpu_init();
-    
-    emu_ref.store(new_emu);
+    {
+        std::lock_guard<std::mutex> lock(emu_ref_mutex);
+        emu_ref = new_emu;
+    }
     ui->centralwidget->emu_ref = new_emu;  // weak_ptr assignment
     ui->centralwidget->tile_viewer_ptr = &tile_viewer;
-    
     emuThread = std::thread([this]() {
-        auto emu = emu_ref.load(); // Atomic load of shared_ptr
-        
+        std::shared_ptr<Emu> emu;
+        {
+            std::lock_guard<std::mutex> lock(emu_ref_mutex);
+            emu = emu_ref;
+        }
         while (emu->ctx.running) {
             if (emu->ctx.paused) { SDL_Delay(10); continue; }
             if (!emu->get_cpu().cpu_step()) {

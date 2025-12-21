@@ -108,11 +108,5 @@ void Rom::cart_write(uint16_t address, uint8_t data)
 
 void Rom::create_blank_rom(uint32_t size)
 {
-    ctx.rom_size = size;
-    ctx.rom_data = std::make_unique<uint8_t[]>(ctx.rom_size);
-    std::memset(ctx.rom_data.get(), 0xFF, ctx.rom_size); // Initialize with 0xFF (common for blank ROMs)
 
-    // Clear the ROM header
-    std::memset(&ctx.header, 0, sizeof(ctx.header));
-    // std::cout << "Blank ROM of size " << ctx.rom_size << " bytes created.\n";
 }
