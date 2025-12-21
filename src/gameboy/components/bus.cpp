@@ -9,97 +9,42 @@
 #include "lcd.h"
 
 Bus::Bus() : rom(nullptr), timer(nullptr), ppu(nullptr), ie_register(0), if_register(0)
-{}
+{
+    init_memory_table();
+}
+
+void Bus::init_memory_table()
+{
+    memory_regions = {{
+        {MemoryMap::ROM_BANK_00_START, MemoryMap::ROM_BANK_NN_END, &Bus::rom_read, &Bus::rom_write},
+        {MemoryMap::VRAM_START, MemoryMap::VRAM_END, &Bus::vram_read, &Bus::vram_write},
+        {MemoryMap::ERAM_START, MemoryMap::ERAM_END, &Bus::exram_read, &Bus::exram_write},
+        {MemoryMap::WRAM_START, MemoryMap::WRAM_END, &Bus::wram_read, &Bus::wram_write},
+        {MemoryMap::ECHO_START, MemoryMap::ECHO_END, &Bus::echoram_read, &Bus::echoram_write},
+        {MemoryMap::OAM_START, MemoryMap::OAM_END, &Bus::oam_read, &Bus::oam_write},
+        {MemoryMap::LCD_START, MemoryMap::LCD_END, &Bus::lcd_read, &Bus::lcd_write},
+        {MemoryMap::IO_START, MemoryMap::IO_END, &Bus::io_read, &Bus::io_write},
+        {MemoryMap::HRAM_START, MemoryMap::IE_REGISTER, &Bus::hram_read, &Bus::hram_write}
+    }};
+}
 
 
 uint8_t Bus::bus_read(uint16_t address)
 {
-    if (MemoryMap::is_rom(address))
-    {
-        return rom->cart_read(address);
-    }
-    else if (MemoryMap::is_vram(address))
-    {
-        return vram_read(address);
-    }
-    else if (MemoryMap::is_eram(address))
-    {
-        return exram_read(address);
-    }
-    else if (MemoryMap::is_wram(address))
-    {
-        return wram_read(address);
-    }
-    else if (MemoryMap::is_echo(address))
-    {
-        return echoram_read(address);
-    }
-    else if (MemoryMap::is_io(address))
-    {
-        return io_read(address);
-    }
-    else if (MemoryMap::is_oam(address))
-    {
-        return oam_read(address);
-    }
-    else if (MemoryMap::is_hram(address))
-    {
-        if (address == MemoryMap::IE_REGISTER) {
-            return ie_register;
+    for (const auto& region : memory_regions) {
+        if (address >= region.start && address <= region.end) {
+            return (this->*region.read_fn)(address);
         }
-        return high_ram[address - MemoryMap::HRAM_START];
     }
-
-    else if (MemoryMap::is_lcd(address))
-    {
-        return lcd->lcd_read(address);
-    }
-
     return 0xFF; // Default for unmapped areas
 }
 
 void Bus::bus_write(uint16_t address, uint8_t data)
 {
-    if (MemoryMap::is_rom(address))
-    {
-        rom->cart_write(address, data);
-    }
-    else if (MemoryMap::is_vram(address))
-    {
-        vram_write(address, data);
-    }
-    else if (MemoryMap::is_eram(address))
-    {
-        exram_write(address, data);
-    }
-    else if (MemoryMap::is_wram(address))
-    {
-        wram_write(address, data);
-    }
-    else if (MemoryMap::is_echo(address))
-    {
-        echoram_write(address, data);
-    }
-    else if (MemoryMap::is_io(address))
-    {
-        io_write(address, data);
-    }
-    else if (MemoryMap::is_oam(address))
-    {
-        oam_write(address, data);
-    }
-
-    else if (MemoryMap::is_lcd(address))
-    {
-        lcd->lcd_write(address, data);
-    }
-
-    else if (MemoryMap::is_hram(address))
-    {
-        if (address == MemoryMap::IE_REGISTER) {
-            ie_register = data;
-        } else {
-            high_ram[address - MemoryMap::HRAM_START] = data;
+    for (const auto& region : memory_regions) {
+        if (address >= region.start && address <= region.end) {
+            (this->*region.write_fn)(address, data);
+            return;
         }
     }
 }
@@ -198,4 +143,41 @@ uint8_t Bus::echoram_read(uint16_t address)
 uint8_t Bus::wram_read(uint16_t address)
 {
     return wram[address - MemoryMap::WRAM_START];
+}
+
+uint8_t Bus::rom_read(uint16_t address)
+{
+    return rom->cart_read(address);
+}
+
+void Bus::rom_write(uint16_t address, uint8_t value)
+{
+    rom->cart_write(address, value);
+}
+
+uint8_t Bus::hram_read(uint16_t address)
+{
+    if (address == MemoryMap::IE_REGISTER) {
+        return ie_register;
+    }
+    return high_ram[address - MemoryMap::HRAM_START];
+}
+
+void Bus::hram_write(uint16_t address, uint8_t value)
+{
+    if (address == MemoryMap::IE_REGISTER) {
+        ie_register = value;
+    } else {
+        high_ram[address - MemoryMap::HRAM_START] = value;
+    }
+}
+
+uint8_t Bus::lcd_read(uint16_t address)
+{
+    return lcd->lcd_read(address);
+}
+
+void Bus::lcd_write(uint16_t address, uint8_t value)
+{
+    lcd->lcd_write(address, value);
 }

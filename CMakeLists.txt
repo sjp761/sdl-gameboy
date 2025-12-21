@@ -6,8 +6,8 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-## Use C++17 for wide compatibility across compilers and to enable std::filesystem
-set(CMAKE_CXX_STANDARD 17)
+## Use C++20 for atomic shared_ptr and other modern features
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 

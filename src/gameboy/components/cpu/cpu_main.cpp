@@ -2,11 +2,12 @@
 #include "bus.h"
 #include "timer.h"
 #include "dma.h"
+#include "ppu.h"
 #include <iostream>
 #include <cstdio>
 #include <interrupts.h>
 
-Cpu::Cpu() : bus(nullptr), timer(nullptr), dma(nullptr)
+Cpu::Cpu() : bus(nullptr), timer(nullptr), dma(nullptr), ppu(nullptr)
 {
 }
 
@@ -126,6 +127,7 @@ void Cpu::emu_cycles(int m_cycles)
 {
     for (int i = 0; i < m_cycles * 4; ++i) {
         timer->tick();
+        ppu->ppu_tick();
     }
     for (int i = 0; i < m_cycles; ++i) {
         if (dma->is_active()) {

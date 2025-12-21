@@ -13,8 +13,8 @@
 namespace {
     constexpr int DEFAULT_WINDOW_WIDTH = 800;
     constexpr int DEFAULT_WINDOW_HEIGHT = 600;
-    constexpr int DEFAULT_SURFACE_WIDTH = 640;
-    constexpr int DEFAULT_SURFACE_HEIGHT = 480;
+    constexpr int DEFAULT_SURFACE_WIDTH = 160;
+    constexpr int DEFAULT_SURFACE_HEIGHT = 144;
     constexpr int COLOR_MAX_VALUE = 256;
 }
 
@@ -23,7 +23,7 @@ namespace {
 void SDLContainer::initSDL()
 {
     
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
         printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         return;
     }
@@ -47,7 +47,7 @@ void SDLContainer::initSDL()
     SDL_FillSurfaceRect(surface.get(), NULL, color); // Random color background
     texture.reset(SDL_CreateTextureFromSurface(renderer, surface.get()));
 
-    render();
+    render(nullptr); // Initial render to clear screen
 }
 
 void SDLContainer::createNativeWindow()
@@ -102,11 +102,15 @@ void SDLContainer::createNativeWindow()
 }
 
 
-void SDLContainer::render()
+void SDLContainer::render(uint8_t* display)
 {
-    if (!renderer) {
+    if (!renderer || !display) {
         return;
     }
+    
+
+    SDL_UpdateTexture(texture.get(), NULL, nullptr, DEFAULT_SURFACE_WIDTH * 4);
+    SDL_SetTextureScaleMode(texture.get(), SDL_SCALEMODE_NEAREST);
     SDL_RenderClear(renderer);
     SDL_RenderTexture(renderer, texture.get(), NULL, NULL);
     SDL_RenderPresent(renderer);

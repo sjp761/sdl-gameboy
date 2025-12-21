@@ -80,31 +80,10 @@ void Cpu::execute_x0_instructions() {
             }
             else //JR conditionals e8
             {
-                switch (static_cast<ConditionCode>(opcode.y & 0b11)) {
-                    case ConditionCode::NZ:
-                        if (!get_flag_z()) {
-                            int8_t tojump = static_cast<int8_t>(fetched_data & 0xFF);
-                            regs.pc += tojump;
-                        }
-                        break;
-                    case ConditionCode::Z:
-                        if (get_flag_z()) {
-                            int8_t tojump = static_cast<int8_t>(fetched_data & 0xFF);
-                            regs.pc += tojump;
-                        }
-                        break;
-                    case ConditionCode::NC:
-                        if (!get_flag_c()) {
-                            int8_t tojump = static_cast<int8_t>(fetched_data & 0xFF);
-                            regs.pc += tojump;
-                        }
-                        break;
-                    case ConditionCode::C:
-                        if (get_flag_c()) {
-                            int8_t tojump = static_cast<int8_t>(fetched_data & 0xFF);
-                            regs.pc += tojump;
-                        }
-                        break;
+                ConditionCode cc = static_cast<ConditionCode>(opcode.y & 0b11);
+                if (check_condition(cc)) {
+                    int8_t offset = static_cast<int8_t>(fetched_data & 0xFF);
+                    regs.pc += offset;
                 }
             }
             break;

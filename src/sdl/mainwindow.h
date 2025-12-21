@@ -3,8 +3,13 @@
 
 #include <QMainWindow>
 #include <thread>
+#include <atomic>
+#include <memory>
+#include <mutex>
 #include <set>
 #include <string>
+#include "emu.h"
+#include "SDL_TileViewer.h"
 class SDLWidget;
 class Emu;
 
@@ -29,14 +34,20 @@ public:
     void fillRecentSet();
     void saveRecentSet();
     SDLWidget* getSDLWidget();
+    std::atomic<std::shared_ptr<Emu>> emu_ref;
+    SDL_TileViewer tile_viewer;
 
+signals:
+    void requestOpenTileViewer();
 
 public slots:
     void handleRecentFileAction(QAction* action);
+    void openTileViewer();
 
 private:
     Ui::MainWindow *ui;
     std::thread emuThread;
+    std::mutex tile_viewer_mutex;  // Protects tile_viewer access
     void startEmulator(const std::string& romPath);
 };
 #endif // MAINWINDOW_H

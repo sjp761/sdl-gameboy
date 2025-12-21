@@ -3,15 +3,16 @@
 #include "cpu/cpu.h"
 #include "bus.h"
 #include <memory>
+#include <atomic>
 #include "timer.h"
 #include "ppu.h"
 #include "dma.h"
 #include "lcd.h"
 struct emu_context 
 {
-    bool paused;
-    bool running;
-    uint64_t ticks;
+    std::atomic<bool> paused;
+    std::atomic<bool> running;
+    std::atomic<uint64_t> ticks;
 };
     
 class Emu
@@ -35,8 +36,4 @@ class Emu
         Cpu& get_cpu() { return cpu; }
         Ppu& get_ppu() { return ppu; }
         void set_component_pointers();
-        const Rom& get_rom() const { return rom; }
-        const Bus& get_bus() const { return bus; }
-        const Cpu& get_cpu() const { return cpu; }
-        const Ppu& get_ppu() const { return ppu; }
 };

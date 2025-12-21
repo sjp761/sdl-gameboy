@@ -21,11 +21,23 @@ MainWindow::MainWindow(QWidget *parent)
     ui->menuFile->addMenu(menuRecent);
     connect(menuRecent, &QMenu::triggered, this, &MainWindow::handleRecentFileAction); // Anytime an action is triggered in the recent files menu (click one of the recent files), call handleRecentFileAction
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::openFile);
+    // Connect signal to slot for opening tile viewer on main thread
+    connect(this, &MainWindow::requestOpenTileViewer, this, &MainWindow::openTileViewer, Qt::QueuedConnection);
     // Removed image conversion action; only loading remains
 }
 
 MainWindow::~MainWindow()
 {
+    // Stop the emulator thread properly
+    auto emu = emu_ref.load();
+    if (emu) {
+        emu->ctx.running = false;
+    }
+    
+    if (emuThread.joinable()) {
+        emuThread.join();  // Wait for the thread to finish before destroying the MainWindow, bool will make it stop
+    }
+    
     delete ui;
     saveRecentSet(); // Save recent files before closing
 }
@@ -81,34 +93,70 @@ SDLWidget *MainWindow::getSDLWidget()
 
 void MainWindow::handleRecentFileAction(QAction *action)
 {
-    std::cout << "Recent file action triggered: " << action->data().toString().toStdString() << std::endl;
-    const std::string path = action->data().toString().toStdString();
-    MainWindow::setWindowTitle(action->data().toString());
-    startEmulator(path);
+    QString filePath = action->data().toString();
+    std::cout << "Recent file action triggered: " << filePath.toStdString() << std::endl;
+    setWindowTitle(filePath);
+    startEmulator(filePath.toStdString());
 }
 
 void MainWindow::startEmulator(const std::string& romPath)
 {
-    if (emuThread.joinable()) {
-        // In a fuller implementation, signal emulator to stop, then join.
-        emuThread.detach();
+    // Stop previous emulator if running
+    auto old_emu = emu_ref.load();
+    if (old_emu) {
+        old_emu->ctx.running = false;
     }
-    emuThread = std::thread([romPath]() {
-        Emu emu;
-        emu.set_component_pointers();
-        emu.get_rom().cart_load(romPath.c_str());
-        emu.ctx.running = true;
-        emu.ctx.paused = false;
-        emu.ctx.ticks = 0;
-        emu.get_cpu().cpu_init();
-
-        // Basic run loop; rendering hookup will be added later
-        while (emu.ctx.running) {
-            if (emu.ctx.paused) { SDL_Delay(10); continue; }
-            if (!emu.get_cpu().cpu_step()) {
+    
+    if (emuThread.joinable()) {
+        emuThread.join();
+    }
+    
+    // Signal to open tile viewer on main thread
+    emit requestOpenTileViewer();
+    
+    // Create new emulator atomically
+    auto new_emu = std::make_shared<Emu>();
+    new_emu->set_component_pointers();
+    new_emu->get_rom().cart_load(romPath.c_str());
+    new_emu->ctx.running = true;
+    new_emu->ctx.paused = false;
+    new_emu->ctx.ticks = 0;
+    new_emu->get_cpu().cpu_init();
+    
+    emu_ref.store(new_emu);
+    ui->centralwidget->emu_ref = new_emu;  // weak_ptr assignment
+    
+    emuThread = std::thread([this]() {
+        auto emu = emu_ref.load(); // Atomic load of shared_ptr
+        uint64_t last_tile_update = 0;
+        
+        while (emu->ctx.running) {
+            if (emu->ctx.paused) { SDL_Delay(10); continue; }
+            if (!emu->get_cpu().cpu_step()) {
                 SDL_Delay(1);
             }
-            emu.ctx.ticks++;
+            emu->ctx.ticks++;
+            
+            // Update tile viewer periodically (every 16ms ~60fps)
+            if ((emu->ctx.ticks - last_tile_update) > 70224) { // ~60 times per second
+                std::lock_guard<std::mutex> tv_lock(tile_viewer_mutex);
+                if (tile_viewer.is_open()) {
+                    // Lock VRAM for reading
+                    std::lock_guard<std::mutex> vram_lock(emu->get_ppu().get_vram_mutex());
+                    tile_viewer.update(emu->get_ppu().get_vram_ptr());
+                    tile_viewer.render();
+                    last_tile_update = emu->ctx.ticks;
+                }
+            }
         }
     });
+}
+
+void MainWindow::openTileViewer()
+{
+    // This runs on the main thread (Qt's event loop thread)
+    std::lock_guard<std::mutex> lock(tile_viewer_mutex);
+    if (!tile_viewer.is_open()) {
+        tile_viewer.init();
+    }
 }

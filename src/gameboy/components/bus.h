@@ -2,6 +2,7 @@
 #include <cstdint>
 #include "memory_map.h"
 #include <string>
+#include <array>
 class Timer; // Forward declaration
 class Rom; // Forward declaration
 class Ppu; // Forward declaration
@@ -15,6 +16,25 @@ class Bus
         Ppu* ppu; //  PPU reference
         DMA* dma; //  DMA reference
         LCD* lcd; //  LCD reference
+        
+        // Table-driven memory region dispatch
+        struct MemoryRegion {
+            uint16_t start;
+            uint16_t end;
+            uint8_t (Bus::*read_fn)(uint16_t);
+            void (Bus::*write_fn)(uint16_t, uint8_t);
+        };
+        
+        static constexpr size_t NUM_REGIONS = 9;
+        std::array<MemoryRegion, NUM_REGIONS> memory_regions;
+        
+        void init_memory_table();
+        uint8_t rom_read(uint16_t address);
+        void rom_write(uint16_t address, uint8_t value);
+        uint8_t hram_read(uint16_t address);
+        void hram_write(uint16_t address, uint8_t value);
+        uint8_t lcd_read(uint16_t address);
+        void lcd_write(uint16_t address, uint8_t value);
         
     public:
         Bus();
