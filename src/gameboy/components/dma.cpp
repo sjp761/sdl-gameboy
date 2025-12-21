@@ -5,7 +5,7 @@ void DMA::start(uint8_t value)
     ctx.active = true;
     ctx.value = value;
     ctx.byte = 0;
-    ctx.start_delay = 2; // Typically, there's a small delay before starting DMA
+    ctx.start_delay = 1; // We are using one because we tick DMA in m-cycles
 }
 
 void DMA::tick()

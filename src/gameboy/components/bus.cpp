@@ -106,7 +106,10 @@ void Bus::bus_write(uint16_t address, uint8_t data)
 
 void Bus::vram_write(uint16_t address, uint8_t value)
 {
-    vram[address - MemoryMap::VRAM_START] = value;
+    if (ppu)
+    {
+        ppu->vram_write(address, value);
+    }
 }
 
 void Bus::io_write(uint16_t address, uint8_t value)
@@ -132,13 +135,19 @@ void Bus::io_write(uint16_t address, uint8_t value)
 
 void Bus::oam_write(uint16_t address, uint8_t value)
 {
-    uint8_t* data_ptr = (uint8_t*)&(ppu->oam) + (address - MemoryMap::OAM_START);
-    *data_ptr = value;
+    if (ppu)
+    {
+        ppu->oam_write(address, value);
+    }
 }
 
 uint8_t Bus::vram_read(uint16_t address)
 {
-    return vram[address - MemoryMap::VRAM_START];
+    if (ppu)
+    {
+        return ppu->vram_read(address);
+    }
+    return 0xFF;
 }
 
 uint8_t Bus::io_read(uint16_t address)
@@ -154,7 +163,11 @@ uint8_t Bus::io_read(uint16_t address)
 
 uint8_t Bus::oam_read(uint16_t address)
 {
-    return *((uint8_t*)&(ppu->oam) + (address - MemoryMap::OAM_START));
+    if (ppu)
+    {
+        return ppu->oam_read(address);
+    }
+    return 0xFF;
 }
 
 void Bus::exram_write(uint16_t address, uint8_t value) //For External RAM
