@@ -8,6 +8,8 @@
 
 Rom::Rom()
 {
+    // Initialize bootrom to zeros
+    std::memset(ctx.bootrom_data, 0, sizeof(ctx.bootrom_data));
 }
 
 bool Rom::cart_load(const std::string &filename)
@@ -98,15 +100,62 @@ std::string Rom::cart_type_name()
 
 uint8_t Rom::cart_read(uint16_t address)
 {
-    return ctx.rom_data[address];
+    // If bootrom is enabled and address is in bootrom range (0x0000-0x00FF)
+    if (ctx.bootrom_enabled && address < 0x0100) {
+        return ctx.bootrom_data[address];
+    }
+    
+    // Otherwise read from cartridge ROM
+    if (address < ctx.rom_size) {
+        return ctx.rom_data[address];
+    }
+    return 0xFF; // Return 0xFF for out of bounds reads
 }
 
 void Rom::cart_write(uint16_t address, uint8_t data)
 {
-   return; // ROM is read-only
+    // ROM is read-only for basic cartridges
+    // MBC (Memory Bank Controller) writes would be handled here for advanced cartridges
 }
 
-void Rom::create_blank_rom(uint32_t size)
+bool Rom::bootrom_load(const std::string &filename)
 {
-
+    namespace fs = std::filesystem;
+    
+    if (!fs::exists(filename)) {
+        std::cerr << "Bootrom file does not exist: " << filename << std::endl;
+        return false;
+    }
+    
+    auto size = fs::file_size(filename);
+    if (size != 0x100) {
+        std::cerr << "Invalid bootrom size (expected 256 bytes): " << size << std::endl;
+        return false;
+    }
+    
+    std::ifstream file(filename, std::ios::binary);
+    if (!file) {
+        std::cerr << "Failed to open bootrom file: " << filename << std::endl;
+        return false;
+    }
+    
+    file.read(reinterpret_cast<char*>(ctx.bootrom_data), 0x100);
+    if (!file) {
+        std::cerr << "Failed to read bootrom file: " << filename << std::endl;
+        return false;
+    }
+    
+    ctx.bootrom_enabled = true;
+    std::cout << "Bootrom loaded successfully\n";
+    return true;
 }
+
+void Rom::disable_bootrom()
+{
+    if (ctx.bootrom_enabled) {
+        ctx.bootrom_enabled = false;
+        std::cout << "Bootrom disabled\n";
+    }
+}
+
+

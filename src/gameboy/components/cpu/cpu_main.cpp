@@ -13,8 +13,8 @@ Cpu::Cpu() : bus(nullptr), timer(nullptr), dma(nullptr), ppu(nullptr)
 
 void Cpu::cpu_init()
 {
-    regs.pc = 0x100;
-    ime = false; // Interrupts enabled by default
+    regs.pc = 0x0000;  // Start at 0x0000 for bootrom (bootrom will jump to 0x0100 when complete)
+    ime = false; // Interrupts disabled by default
 }
 
 bool Cpu::cpu_step()

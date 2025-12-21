@@ -19,11 +19,15 @@ MainWindow::MainWindow(QWidget *parent)
     menuRecent = new QMenu(tr("Recent Files"), this);
     ui->setupUi(this);
     ui->menuFile->addMenu(menuRecent);
-    connect(menuRecent, &QMenu::triggered, this, &MainWindow::handleRecentFileAction); // Anytime an action is triggered in the recent files menu (click one of the recent files), call handleRecentFileAction
+    connect(menuRecent, &QMenu::triggered, this, &MainWindow::handleRecentFileAction);
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::openFile);
-    // Connect signal to slot for opening tile viewer on main thread
     connect(this, &MainWindow::requestOpenTileViewer, this, &MainWindow::openTileViewer, Qt::QueuedConnection);
-    // Removed image conversion action; only loading remains
+    connect(this, &MainWindow::requestOpenTileMapViewer, this, &MainWindow::openTileMapViewer, Qt::QueuedConnection);
+    
+    // Auto-start emulator with bootrom only after UI is ready
+    QTimer::singleShot(100, this, [this]() {
+        startEmulator("");
+    });
 }
 
 MainWindow::~MainWindow()
@@ -117,23 +121,34 @@ void MainWindow::startEmulator(const std::string& romPath)
         emuThread.join();
     }
     
-    // Signal to open tile viewer on main thread
-    emit requestOpenTileViewer();
-    
     // Create new emulator atomically
     auto new_emu = std::make_shared<Emu>();
     new_emu->set_component_pointers();
-    new_emu->get_rom().cart_load(romPath.c_str());
+    
+    // Load bootrom by default
+    new_emu->get_rom().bootrom_load("roms/dmg_boot.gb");
+    
+    // Load cart ROM if provided
+    if (!romPath.empty()) {
+        new_emu->get_rom().cart_load(romPath.c_str());
+    }
+    
     new_emu->ctx.running = true;
     new_emu->ctx.paused = false;
     new_emu->ctx.ticks = 0;
     new_emu->get_cpu().cpu_init();
     {
-        std::lock_guard<std::mutex> lock(emu_ref_mutex);
+        std::lock_guard<std::mutex> lock(emu_ref_mutex); // protect emu_ref assignment, brackets ensure lock scope is limited
         emu_ref = new_emu;
     }
     ui->centralwidget->emu_ref = new_emu;  // weak_ptr assignment
     ui->centralwidget->tile_viewer_ptr = &tile_viewer;
+    ui->centralwidget->tile_map_viewer_ptr = &tile_map_viewer;
+    
+    // Signal to open tile viewers on main thread (after emulator is set up)
+    emit requestOpenTileViewer();
+    emit requestOpenTileMapViewer();
+    
     emuThread = std::thread([this]() {
         std::shared_ptr<Emu> emu;
         {
@@ -150,10 +165,19 @@ void MainWindow::startEmulator(const std::string& romPath)
     });
 }
 
+
 void MainWindow::openTileViewer()
 {
     // This runs on the main thread (Qt's event loop thread)
     if (!tile_viewer.is_open()) {
         tile_viewer.init();
+    }
+}
+
+void MainWindow::openTileMapViewer()
+{
+    // This runs on the main thread (Qt's event loop thread)
+    if (!tile_map_viewer.is_open()) {
+        tile_map_viewer.init();
     }
 }

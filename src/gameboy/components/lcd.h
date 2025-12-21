@@ -33,8 +33,8 @@ struct lcd_status_register
     uint8_t lyc_eq_ly_interrupt : 1;    // Bit 6: LYC=LY Interrupt
     uint8_t unused : 1;                 // Bit 7: Unused
     
-    // Constructor to set default values (0b00000011 - mode 3)
-    lcd_status_register() : mode_flag(3), lyc_eq_ly_flag(0), mode_0_hblank_interrupt(0),
+    // Constructor to set default values (0b00000001 - mode 1 VBLANK for bootrom compatibility)
+    lcd_status_register() : mode_flag(1), lyc_eq_ly_flag(0), mode_0_hblank_interrupt(0),
                            mode_1_vblank_interrupt(0), mode_2_oam_interrupt(0),
                            lyc_eq_ly_interrupt(0), unused(0) {}
 };

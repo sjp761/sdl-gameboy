@@ -58,6 +58,7 @@ public:
     // VRAM direct access (caller must lock get_vram_mutex())
     uint8_t* get_vram_ptr() { return reinterpret_cast<uint8_t*>(&vram); }
     uint8_t* get_tile_data_ptr() { return vram.tile_data_0; }
+    uint8_t* get_tilemap_ptr() { return vram.tile_map_1; } // Default to tile_map_1; can be extended for bank selection
     std::mutex& get_vram_mutex() { return vram_mutex; }
 
     // OAM accessors

@@ -59,6 +59,13 @@ void Bus::vram_write(uint16_t address, uint8_t value)
 
 void Bus::io_write(uint16_t address, uint8_t value)
 {
+    // Bootrom disable register (0xFF50) - write to ROM component
+    if (address == 0xFF50 && rom) {
+        rom->disable_bootrom();
+        // Don't store in io array, this is write-only
+        return;
+    }
+    
     // Route timer register writes to Timer component when attached
     if (timer && (address >= 0xFF04 && address <= 0xFF07)) {
         timer->write(address, value);

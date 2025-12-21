@@ -17,8 +17,10 @@ if(QT_FOUND)
     find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets)
 endif()
 
+
 # Find SDL3 and other dependencies
 find_package(SDL3 REQUIRED)
+find_package(SDL3_ttf REQUIRED)
 find_package(jsoncpp REQUIRED)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
@@ -34,7 +36,7 @@ set(GAMEBOY_INCLUDES src/gameboy src/sdl src/gameboy/components src/gameboy/comp
 
 # SDL-Qt GUI executable (if Qt is available)
 if(QT_FOUND)
-    set(SDL_QT_SOURCES
+        set(SDL_QT_SOURCES
             src/sdl/main.cpp
             src/sdl/mainwindow.cpp
             src/sdl/mainwindow.h
@@ -46,7 +48,9 @@ if(QT_FOUND)
             src/sdl/SDL_SmartPointer.h
             src/sdl/SDL_TileViewer.cpp
             src/sdl/SDL_TileViewer.h
-    )
+            src/sdl/SDL_TileMapViewer.cpp
+            src/sdl/SDL_TileMapViewer.h
+        )
 endif()
 
 # SDL-Qt GUI target (optional, if Qt is available)
@@ -71,7 +75,7 @@ if(QT_FOUND)
         ${CPU_SRC}
     )
 
-    target_link_libraries(sdl-gameboy-qt PRIVATE Qt${QT_VERSION_MAJOR}::Widgets SDL3::SDL3 JsonCpp::JsonCpp)
+    target_link_libraries(sdl-gameboy-qt PRIVATE Qt${QT_VERSION_MAJOR}::Widgets SDL3::SDL3 SDL3_ttf::SDL3_ttf JsonCpp::JsonCpp)
     target_include_directories(sdl-gameboy-qt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/sdl ${GAMEBOY_INCLUDES})
     
     # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

@@ -2,6 +2,7 @@
 #include "SDLContainer.h"
 #include "ppu.h"
 #include "SDL_TileViewer.h"
+#include "SDL_TileMapViewer.h"
 #include <QVBoxLayout>
 #include <QResizeEvent>
 #include <QTimer>
@@ -38,13 +39,21 @@ void SDLWidget::renderFrame()
         uint8_t screenBuffer[SCREEN_BUFFER_SIZE];
         emu->get_ppu().copy_screen_buffer(screenBuffer);
         sdlcon.render(screenBuffer);
-        
+
         // Update tile viewer if active
         if (tile_viewer_ptr) {
             if (tile_viewer_ptr->is_open()) {
                 std::lock_guard<std::mutex> vram_lock(emu->get_ppu().get_vram_mutex());
                 tile_viewer_ptr->update(emu->get_ppu().get_vram_ptr());
                 tile_viewer_ptr->render();
+            }
+        }
+        // Update tile map viewer if active
+        if (tile_map_viewer_ptr) {
+            if (tile_map_viewer_ptr->is_open()) {
+                std::lock_guard<std::mutex> vram_lock(emu->get_ppu().get_vram_mutex());
+                tile_map_viewer_ptr->update(emu->get_ppu().get_tilemap_ptr());
+                tile_map_viewer_ptr->render();
             }
         }
     } else {

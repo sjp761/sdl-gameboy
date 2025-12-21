@@ -9,7 +9,8 @@ class LCD;
 
 Ppu::Ppu() : bus(nullptr), lcd(nullptr), cpu(nullptr), dot(0)
 {
-    
+    // Initialize all VRAM to 0
+    std::memset(&vram, 0, sizeof(vram));
 }
 
 void Ppu::copy_screen_buffer(uint8_t* dest) const
@@ -105,6 +106,17 @@ void Ppu::handle_vblank()
 
 uint8_t Ppu::vram_read(uint16_t address)
 {
+    // If LCD if off, vram is always accessible
+    // If LCD is on, vram is only accessible when not in mode 3 (PIXEL_TRANSFER)
+    if (lcd && lcd->regs.lcd_control.lcd_enable) 
+    {
+        // If LCD is enabled, only allow reads outside of mode 3
+        if (lcd->regs.lcd_status.mode_flag == static_cast<uint8_t>(LCD_Modes::PIXEL_TRANSFER)) {
+            // VRAM is locked during pixel transfer - return 0xFF
+            return 0xFF;
+        }
+    }
+    
     // VRAM range: 0x8000-0x9FFF (8KB)
     std::lock_guard<std::mutex> lock(vram_mutex);
     uint16_t offset = address - 0x8000;
@@ -113,6 +125,15 @@ uint8_t Ppu::vram_read(uint16_t address)
 
 void Ppu::vram_write(uint16_t address, uint8_t value)
 {
+    // VRAM is only accessible when LCD is off or when not in mode 3 (PIXEL_TRANSFER)
+    if (lcd && lcd->regs.lcd_control.lcd_enable) {
+        // If LCD is enabled, only allow writes outside of mode 3
+        if (lcd->regs.lcd_status.mode_flag == static_cast<uint8_t>(LCD_Modes::PIXEL_TRANSFER)) {
+            // VRAM is locked during pixel transfer - ignore write
+            return;
+        }
+    }
+    
     // VRAM range: 0x8000-0x9FFF (8KB)
     std::lock_guard<std::mutex> lock(vram_mutex);
     uint16_t offset = address - 0x8000;

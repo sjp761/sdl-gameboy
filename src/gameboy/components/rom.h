@@ -25,6 +25,8 @@ struct cart_context {
     uint32_t rom_size;
     std::unique_ptr<uint8_t[]> rom_data;
     rom_header header;
+    bool bootrom_enabled = true;  // Bootrom is enabled at startup
+    uint8_t bootrom_data[0x100];  // 256 bytes for DMG bootrom
 };
 
 
@@ -135,9 +137,12 @@ class Rom
     public:
         Rom();
         bool cart_load(const std::string &filename);
+        bool bootrom_load(const std::string &filename);
         cart_context ctx;
         std::string cart_lic_name();
         std::string cart_type_name();
         uint8_t cart_read(uint16_t address);
         void cart_write(uint16_t address, uint8_t data);
+        void disable_bootrom();
+        bool is_bootrom_enabled() const { return ctx.bootrom_enabled; }
 };
