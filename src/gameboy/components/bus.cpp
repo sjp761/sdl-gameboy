@@ -61,6 +61,7 @@ void Bus::io_write(uint16_t address, uint8_t value)
 {
     // Bootrom disable register (0xFF50) - write to ROM component
     if (address == 0xFF50 && rom) {
+        std::cout << "Bus::io_write: write to 0xFF50, value=" << std::hex << (int)value << std::dec << std::endl;
         rom->disable_bootrom();
         // Don't store in io array, this is write-only
         return;
@@ -82,6 +83,14 @@ void Bus::io_write(uint16_t address, uint8_t value)
         dma->start(value);
         return;
     }
+    
+    // Route audio register writes
+    if ((address >= MemoryMap::AUDIO_START && address <= MemoryMap::AUDIO_END) ||
+        (address >= MemoryMap::WAVE_RAM_START && address <= MemoryMap::WAVE_RAM_END)) {
+        audio_write(address, value);
+        return;
+    }
+    
     io[address - MemoryMap::IO_START] = value;
 }
 
@@ -110,6 +119,13 @@ uint8_t Bus::io_read(uint16_t address)
     if (address == MemoryMap::IF_REGISTER) {
         return if_register;
     }
+    
+    // Route audio register reads
+    if ((address >= MemoryMap::AUDIO_START && address <= MemoryMap::AUDIO_END) ||
+        (address >= MemoryMap::WAVE_RAM_START && address <= MemoryMap::WAVE_RAM_END)) {
+        return audio_read(address);
+    }
+    
     return io[address - MemoryMap::IO_START];
 }
 
@@ -187,4 +203,34 @@ uint8_t Bus::lcd_read(uint16_t address)
 void Bus::lcd_write(uint16_t address, uint8_t value)
 {
     lcd->lcd_write(address, value);
+}
+
+uint8_t Bus::audio_read(uint16_t address)
+{
+    // Wave Pattern RAM (0xFF30-0xFF3F)
+    if (address >= MemoryMap::WAVE_RAM_START && address <= MemoryMap::WAVE_RAM_END) {
+        return wave_ram[address - MemoryMap::WAVE_RAM_START];
+    }
+    
+    // Audio registers (0xFF10-0xFF26)
+    if (address >= MemoryMap::AUDIO_START && address <= MemoryMap::AUDIO_END) {
+        return audio_regs[address - MemoryMap::AUDIO_START];
+    }
+    
+    return 0xFF;
+}
+
+void Bus::audio_write(uint16_t address, uint8_t value)
+{
+    // Wave Pattern RAM (0xFF30-0xFF3F)
+    if (address >= MemoryMap::WAVE_RAM_START && address <= MemoryMap::WAVE_RAM_END) {
+        wave_ram[address - MemoryMap::WAVE_RAM_START] = value;
+        return;
+    }
+    
+    // Audio registers (0xFF10-0xFF26)
+    if (address >= MemoryMap::AUDIO_START && address <= MemoryMap::AUDIO_END) {
+        audio_regs[address - MemoryMap::AUDIO_START] = value;
+        return;
+    }
 }

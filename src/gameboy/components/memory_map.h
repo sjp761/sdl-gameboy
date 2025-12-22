@@ -56,6 +56,14 @@ namespace MemoryMap {
     constexpr uint16_t SERIAL_DATA = 0xFF01;      // SB - Serial transfer data
     constexpr uint16_t SERIAL_CONTROL = 0xFF02;   // SC - Serial transfer control
     
+    // Audio Registers
+    constexpr uint16_t AUDIO_START = 0xFF10;      // NR10 - Channel 1 Sweep register
+    constexpr uint16_t AUDIO_END   = 0xFF26;      // NR52 - Sound on/off
+    constexpr uint16_t WAVE_RAM_START = 0xFF30;   // Wave Pattern RAM
+    constexpr uint16_t WAVE_RAM_END   = 0xFF3F;   // Wave Pattern RAM end
+    constexpr uint16_t AUDIO_SIZE = 0x17;         // 0xFF10-0xFF26
+    constexpr uint16_t WAVE_RAM_SIZE = 0x10;      // 16 bytes
+    
     // Helper functions to check address ranges
     inline bool is_rom(uint16_t address) {
         return address <= ROM_BANK_NN_END;

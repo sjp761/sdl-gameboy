@@ -35,6 +35,8 @@ class Bus
         void hram_write(uint16_t address, uint8_t value);
         uint8_t lcd_read(uint16_t address);
         void lcd_write(uint16_t address, uint8_t value);
+        uint8_t audio_read(uint16_t address);
+        void audio_write(uint16_t address, uint8_t value);
         
     public:
         Bus();
@@ -60,5 +62,7 @@ class Bus
         uint8_t high_ram[MemoryMap::HRAM_SIZE] = {}; // 127 bytes High RAM (0xFF80-0xFFFE)
         uint8_t ie_register = 0; // Interrupt Enable register (0xFFFF)
         uint8_t if_register = 0; // Interrupt Flag register (0xFF0F)
+        uint8_t audio_regs[MemoryMap::AUDIO_SIZE] = {}; // Audio registers (0xFF10-0xFF26)
+        uint8_t wave_ram[MemoryMap::WAVE_RAM_SIZE] = {}; // Wave Pattern RAM (0xFF30-0xFF3F)
         std::string serial_buffer = "";
 };
