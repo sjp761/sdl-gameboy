@@ -22,4 +22,5 @@ void Emu::set_component_pointers()
   timer.set_cmp(&cpu, &bus);
   ppu.set_cmp(&bus, &lcd, &cpu);
   dma.set_cmp(&bus);
+  lcd.set_cmp(&ppu, &cpu);
 }

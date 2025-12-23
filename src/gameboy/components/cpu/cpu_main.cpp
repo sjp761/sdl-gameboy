@@ -58,7 +58,6 @@ bool Cpu::cpu_step()
         ime = true;
         ime_delay = false;
     }
-    std::cout << std::hex << regs.pc << std::endl;
     read_serial_debug();
     return true;
 }

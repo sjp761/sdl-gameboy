@@ -16,9 +16,7 @@ constexpr int TILE_MAP_HEIGHT = 32;
 constexpr int VRAM_SIZE = 0x2000; // 8KB
 constexpr int SCREEN_WIDTH = 160;
 constexpr int SCREEN_HEIGHT = 144;
-constexpr int SCREEN_BUFFER_SIZE = SCREEN_WIDTH * SCREEN_HEIGHT;
-
-struct oam_entry
+constexpr int SCREEN_BUFFER_SIZE = 360*16; // The display holds 360 tiles of 16 bytes each (160x144 pixels, 8 pixels per byte, 2 bytes per tile row)
 {
     uint8_t y_pos;
     uint8_t x_pos;

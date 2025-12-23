@@ -89,17 +89,6 @@ enum class LCD_Colors : uint8_t
     BLACK = 0b11
 };
 
-
-inline std::unordered_map<LCD_Colors, uint32_t> SDL_LCD_color_codes = 
-{
-    {LCD_Colors::WHITE, 0xFFFFFFFF},
-    {LCD_Colors::LIGHT_GRAY, 0xFFAAAAAA},
-    {LCD_Colors::DARK_GRAY, 0xFF555555},
-    {LCD_Colors::BLACK, 0xFF000000}
-};
-
-// Legacy enums removed - now using bit-field structs instead
-
 enum class LCD_Modes : uint8_t //For bits 0-1 of LCD Status register
 {
     HBLANK = 0,

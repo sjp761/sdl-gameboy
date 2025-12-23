@@ -21,8 +21,8 @@ namespace {
 // Instance members are defined in the class now
 
 void SDLContainer::initSDL()
-{
-    
+{   
+    srand(static_cast<unsigned int>(time(nullptr)));
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         return;
@@ -41,12 +41,20 @@ void SDLContainer::initSDL()
         printf("Unable to create SDL renderer: %s\n", SDL_GetError());
         return;
     }
-    surface.reset(SDL_CreateSurface(DEFAULT_SURFACE_WIDTH, DEFAULT_SURFACE_HEIGHT, SDL_PIXELFORMAT_RGBA32));
+    // Create streaming texture for direct pixel updates
+    texture.reset(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 
+                                    DEFAULT_SURFACE_WIDTH, DEFAULT_SURFACE_HEIGHT));
+    
+    // Fill with random color initially
     const SDL_PixelFormatDetails* fmt = SDL_GetPixelFormatDetails(SDL_PIXELFORMAT_RGBA32);
     Uint32 color = SDL_MapRGB(fmt, nullptr, rand() % COLOR_MAX_VALUE, rand() % COLOR_MAX_VALUE, rand() % COLOR_MAX_VALUE);
-    SDL_FillSurfaceRect(surface.get(), NULL, color); // Random color background
-    texture.reset(SDL_CreateTextureFromSurface(renderer, surface.get()));
-
+    void* pixels;
+    int pitch;
+    if (SDL_LockTexture(texture.get(), nullptr, &pixels, &pitch)) {
+        SDL_memset(pixels, color & 0xFF, pitch * DEFAULT_SURFACE_HEIGHT);
+        SDL_UnlockTexture(texture.get());
+    }
+    std::cout << std::hex << color << std::dec << std::endl;
     render(nullptr); // Initial render to clear screen
 }
 
@@ -113,16 +121,14 @@ void SDLContainer::render(const uint8_t* display)
         void* pixels;
         int pitch;
         if (SDL_LockTexture(texture.get(), nullptr, &pixels, &pitch)) {
-            // Copy display buffer to texture (assuming grayscale to RGBA conversion)
-            uint32_t* dest = static_cast<uint32_t*>(pixels);
-            for (int i = 0; i < DEFAULT_SURFACE_WIDTH * DEFAULT_SURFACE_HEIGHT; i++) {
-                uint8_t gray = display[i];
-                dest[i] = (0xFF << 24) | (gray << 16) | (gray << 8) | gray; // RGBA
-            }
-            SDL_UnlockTexture(texture.get());
+            SDL_UnlockTexture(texture.get()); //Placeholder for now because display data encoding needs to be decided
+        } 
+        else 
+        {
+            printf("SDL_LockTexture failed: %s\n", SDL_GetError());
         }
     }
-
+    
     SDL_SetTextureScaleMode(texture.get(), SDL_SCALEMODE_NEAREST);
     SDL_RenderClear(renderer);
     SDL_RenderTexture(renderer, texture.get(), nullptr, nullptr);

@@ -21,4 +21,12 @@ public:
         SDL_SmartPointer<SDL_Texture> texture{nullptr};
         SDL_SmartPointer<SDL_Surface> surface{nullptr};
         QWindow* embedded = nullptr;
+
+private:
+        static constexpr uint32_t gameboy_palette[] = {
+            0xFFFFFFFF,  // WHITE
+            0xFFAAAAAA,  // LIGHT_GRAY
+            0xFF555555,  // DARK_GRAY
+            0xFF000000   // BLACK
+        };
 };

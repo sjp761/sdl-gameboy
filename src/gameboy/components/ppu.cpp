@@ -57,21 +57,31 @@ void Ppu::handle_oam_search()
     }
 }
 
-void Ppu::handle_pixel_transfer() //We handle background drawing and window drawing here
+void Ppu::handle_pixel_transfer() // We handle background drawing and window drawing here
 {
     // Only draw the scanline once when we first enter pixel transfer mode (at dot 80)
     if (dot == OAM_SEARCH_DOTS)
     {
-        uint8_t scy = lcd->regs.scroll_y;
+        uint8_t scy = lcd->regs.scroll_y; // We read these at the beginning of each scanline start
         uint8_t scx = lcd->regs.scroll_x;
         uint8_t ly = lcd->regs.lcd_y;
-
-        // TODO: Implement actual pixel drawing here
-        // Write directly to screen_back buffer (no mutex needed)
     }
     if (dot >= OAM_SEARCH_DOTS + PIXEL_TRANSFER_DOTS)
     {
         lcd->set_mode(LCD_Modes::HBLANK);
+        for (int i = 0; i < 160; i++) //i is the pixel x position
+        {
+            uint16_t tile_map_base_addr = lcd->regs.lcd_control.bg_tile_map_display_select ? 0x9C00 : 0x9800; //Which tile map to use for background
+            uint8_t scy = lcd->regs.scroll_y; // Scroll Y, starting Y position in the background
+            uint8_t scx = lcd->regs.scroll_x; // Scroll X, starting X position in the background
+            uint8_t ly = lcd->regs.lcd_y;     // Current scanline (LY)
+            uint8_t* vram_base_ptr = reinterpret_cast<uint8_t*>(vram_back); // Base pointer to VRAM back buffer, use for 8000 addressing method
+            uint8_t* tile_map_base_ptr = vram_base_ptr + (tile_map_base_addr - 0x8000); // Pointer to the start of the selected tile map
+            uint16_t tile_data_base_addr = lcd->regs.lcd_control.bg_window_tile_data_select ? 0x8000 : 0x9000; // Bit 4 determines adressing mode, 8000 or 9000 is the base addr, 8000 uses unsigned math while 9000 uses signed math
+            uint8_t* tile_data_base_ptr = vram_base_ptr + (tile_data_base_addr - 0x8000); // Pointer to the start of the selected tile data
+
+        }
+
     }
 }
 
