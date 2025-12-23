@@ -78,8 +78,14 @@ void SDL_TileViewer::render_tile(const uint8_t* vram, int tile_index, int x, int
     // Each tile is 16 bytes (8x8 pixels, 2 bits per pixel)
     uint16_t tile_address = tile_index * 16;
     
-    // Create pixel buffer
-    uint32_t pixels[TILE_SIZE * TILE_SIZE];
+    // Lock texture and get pixel buffer
+    void* pixels_raw;
+    int pitch;
+    if (!SDL_LockTexture(tile_texture.get(), nullptr, &pixels_raw, &pitch)) {
+        return;
+    }
+    
+    uint32_t* pixels = static_cast<uint32_t*>(pixels_raw);
     
     // Decode tile data
     for (int row = 0; row < TILE_SIZE; row++) 
@@ -95,8 +101,7 @@ void SDL_TileViewer::render_tile(const uint8_t* vram, int tile_index, int x, int
         }
     }
     
-    // Update texture with pixel data
-    SDL_UpdateTexture(tile_texture.get(), nullptr, pixels, TILE_SIZE * sizeof(uint32_t));
+    SDL_UnlockTexture(tile_texture.get());
     
     // Render scaled tile
     SDL_FRect dest_rect = {

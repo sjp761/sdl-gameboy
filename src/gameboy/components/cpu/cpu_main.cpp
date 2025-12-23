@@ -6,6 +6,8 @@
 #include <iostream>
 #include <cstdio>
 #include <interrupts.h>
+#include <thread>
+#include <chrono>
 
 Cpu::Cpu() : bus(nullptr), timer(nullptr), dma(nullptr), ppu(nullptr)
 {
@@ -56,8 +58,8 @@ bool Cpu::cpu_step()
         ime = true;
         ime_delay = false;
     }
+    std::cout << std::hex << regs.pc << std::endl;
     read_serial_debug();
-
     return true;
 }
 
@@ -125,7 +127,8 @@ void Cpu::read_serial_debug()
 
 void Cpu::emu_cycles(int m_cycles)
 {
-    for (int i = 0; i < m_cycles * 4; ++i) {
+    for (int i = 0; i < m_cycles * 4; ++i) 
+    {
         timer->tick();
         ppu->ppu_tick();
     }
@@ -133,7 +136,9 @@ void Cpu::emu_cycles(int m_cycles)
         if (dma->is_active()) {
             dma->tick();
         }
+        //std::this_thread::sleep_for(std::chrono::microseconds(1)); // Simulate timing delay, arbitrary value for now
     }
+    
 }
 
 void Cpu::request_interrupt(Interrupts::InterruptMask it)

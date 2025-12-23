@@ -9,14 +9,17 @@ class LCD;
 
 Ppu::Ppu() : bus(nullptr), lcd(nullptr), cpu(nullptr), dot(0)
 {
-    // Initialize all VRAM to 0
-    std::memset(&vram, 0, sizeof(vram));
+    // Initialize both VRAM buffers to 0
+    std::memset(&vram_buffers[0], 0, sizeof(vram_layout));
+    std::memset(&vram_buffers[1], 0, sizeof(vram_layout));
+    // Screen buffers are already initialized to 0 by their declarations
 }
 
-void Ppu::copy_screen_buffer(uint8_t* dest) const
+void Ppu::swap_buffers()
 {
-    std::lock_guard<std::mutex> lock(screen_mutex); // Lock the screen buffer during copy
-    std::memcpy(dest, screen, SCREEN_BUFFER_SIZE); // Quick copy under lock to minimize contention between PPU writes and SDL reads
+    // Copy both to front buffer (better than pointer swap because rendering thread may be mid-read on one buffer)
+    std::memcpy(screen_front, screen_back, SCREEN_BUFFER_SIZE);
+    std::memcpy(vram_front, vram_back, sizeof(vram_layout));
 }
 
 void Ppu::set_cmp(Bus *bus_ptr, LCD* lcd_ptr, Cpu* cpu_ptr)
@@ -64,7 +67,7 @@ void Ppu::handle_pixel_transfer() //We handle background drawing and window draw
         uint8_t ly = lcd->regs.lcd_y;
 
         // TODO: Implement actual pixel drawing here
-        // When drawing is implemented, wrap screen writes with std::lock_guard<std::mutex> lock(screen_mutex);
+        // Write directly to screen_back buffer (no mutex needed)
     }
     if (dot >= OAM_SEARCH_DOTS + PIXEL_TRANSFER_DOTS)
     {
@@ -118,9 +121,8 @@ uint8_t Ppu::vram_read(uint16_t address)
     }
     
     // VRAM range: 0x8000-0x9FFF (8KB)
-    std::lock_guard<std::mutex> lock(vram_mutex);
     uint16_t offset = address - 0x8000;
-    return reinterpret_cast<uint8_t*>(&vram)[offset];
+    return reinterpret_cast<uint8_t*>(&vram_back)[offset];
 }
 
 void Ppu::vram_write(uint16_t address, uint8_t value)
@@ -135,9 +137,8 @@ void Ppu::vram_write(uint16_t address, uint8_t value)
     }
     
     // VRAM range: 0x8000-0x9FFF (8KB)
-    std::lock_guard<std::mutex> lock(vram_mutex);
     uint16_t offset = address - 0x8000;
-    reinterpret_cast<uint8_t*>(&vram)[offset] = value;
+    reinterpret_cast<uint8_t*>(vram_back)[offset] = value;
 }
 
 uint8_t Ppu::oam_read(uint16_t address)

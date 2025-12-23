@@ -11,7 +11,7 @@ public:
         SDLContainer() = default;
         ~SDLContainer() = default;
 
-        void render(uint8_t* display);
+        void render(const uint8_t* display);
         void initSDL();
         void createNativeWindow();
         void resize(int width, int height);

@@ -102,17 +102,30 @@ void SDLContainer::createNativeWindow()
 }
 
 
-void SDLContainer::render(uint8_t* display)
+void SDLContainer::render(const uint8_t* display)
 {
-    if (!renderer || !display) {
+    if (!renderer || !texture.get()) {
         return;
     }
     
+    if (display) {
+        // Lock texture and copy pixel data
+        void* pixels;
+        int pitch;
+        if (SDL_LockTexture(texture.get(), nullptr, &pixels, &pitch)) {
+            // Copy display buffer to texture (assuming grayscale to RGBA conversion)
+            uint32_t* dest = static_cast<uint32_t*>(pixels);
+            for (int i = 0; i < DEFAULT_SURFACE_WIDTH * DEFAULT_SURFACE_HEIGHT; i++) {
+                uint8_t gray = display[i];
+                dest[i] = (0xFF << 24) | (gray << 16) | (gray << 8) | gray; // RGBA
+            }
+            SDL_UnlockTexture(texture.get());
+        }
+    }
 
-    SDL_UpdateTexture(texture.get(), NULL, nullptr, DEFAULT_SURFACE_WIDTH * 4);
     SDL_SetTextureScaleMode(texture.get(), SDL_SCALEMODE_NEAREST);
     SDL_RenderClear(renderer);
-    SDL_RenderTexture(renderer, texture.get(), NULL, NULL);
+    SDL_RenderTexture(renderer, texture.get(), nullptr, nullptr);
     SDL_RenderPresent(renderer);
 }
 

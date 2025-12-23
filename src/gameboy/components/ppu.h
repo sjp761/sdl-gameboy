@@ -44,37 +44,36 @@ public:
     Cpu* cpu;
     oam_entry oam[40] = {};
     Ppu();
-    uint8_t dot = 0; //Dot is current cycle within a scanline (as referred to in the Pandocs)
+    uint16_t dot = 0; //Dot is current cycle within a scanline (as referred to in the Pandocs)
     void set_cmp(Bus* bus_ptr, LCD* lcd_ptr, Cpu* cpu_ptr);
     void ppu_tick();
 
-    // Thread-safe screen buffer access
-    void copy_screen_buffer(uint8_t* dest) const;
+    // Double-buffered access - rendering thread gets front buffer
+    const uint8_t* get_screen_buffer() const { return screen_front; }
+    const uint8_t* get_vram_buffer() const { return reinterpret_cast<const uint8_t*>(vram_front); }
+    const uint8_t* get_tilemap_buffer() const { return vram_front->tile_map_1; }
+    
+    // Swap buffers - call this once per frame from emulation thread
+    void swap_buffers();
 
-    // VRAM accessors (thread-safe)
+    // VRAM accessors (no mutex needed - writing to back buffer)
     uint8_t vram_read(uint16_t address);
     void vram_write(uint16_t address, uint8_t value);
-    
-    // VRAM direct access (caller must lock get_vram_mutex())
-    uint8_t* get_vram_ptr() { return reinterpret_cast<uint8_t*>(&vram); }
-    uint8_t* get_tile_data_ptr() { return vram.tile_data_0; }
-    uint8_t* get_tilemap_ptr() { return vram.tile_map_1; } // Default to tile_map_1; can be extended for bank selection
-    std::mutex& get_vram_mutex() { return vram_mutex; }
 
     // OAM accessors
     uint8_t oam_read(uint16_t address);
     void oam_write(uint16_t address, uint8_t value);
 
 private:
-    // Video RAM (0x8000-0x9FFF)
-    vram_layout vram;
+    // Double-buffered Video RAM (0x8000-0x9FFF) - using memcpy
+    vram_layout vram_buffers[2];
+    vram_layout* vram_back = &vram_buffers[0];  // Emulation thread writes here
+    vram_layout* vram_front = &vram_buffers[1]; // Rendering thread reads from here
     
-    // Screen buffer (protected by mutex)
-    uint8_t screen[SCREEN_BUFFER_SIZE] = {};
-    mutable std::mutex screen_mutex;
-    
-    // VRAM mutex
-    mutable std::mutex vram_mutex;
+    // Double-buffered screen buffer - using memcpy
+    uint8_t screen_buffers[2][SCREEN_BUFFER_SIZE] = {};
+    uint8_t* screen_back = screen_buffers[0];  // Emulation thread writes here
+    uint8_t* screen_front = screen_buffers[1]; // Rendering thread reads from here
 
     void handle_oam_search();
     void handle_pixel_transfer();

@@ -10,8 +10,6 @@ void DMA::start(uint8_t value)
 
 void DMA::tick()
 {
-    if (!ctx.active) return;
-
     if (ctx.start_delay > 0) {
         ctx.start_delay--;
         return;
