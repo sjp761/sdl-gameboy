@@ -16,7 +16,9 @@ constexpr int TILE_MAP_HEIGHT = 32;
 constexpr int VRAM_SIZE = 0x2000; // 8KB
 constexpr int SCREEN_WIDTH = 160;
 constexpr int SCREEN_HEIGHT = 144;
-constexpr int SCREEN_BUFFER_SIZE = 360*16; // The display holds 360 tiles of 16 bytes each (160x144 pixels, 8 pixels per byte, 2 bytes per tile row)
+constexpr int SCREEN_BUFFER_SIZE = 160*144; // The display holds 360 tiles of 16 bytes each (160x144 pixels, 8 pixels per byte, 2 bytes per tile row)
+//Temporarily setting this to make things easier for me, will optimize later, original value is 360*16
+struct oam_entry
 {
     uint8_t y_pos;
     uint8_t x_pos;
@@ -32,6 +34,13 @@ struct vram_layout
     uint8_t tile_data_2[0x0800];      // 0x9000-0x97FF (2KB) - Block 2
     uint8_t tile_map_1[0x0400];      // 0x9800-0x9BFF (1KB) -  Tile Map 1
     uint8_t tile_map_2[0x0400];  // 0x9C00-0x9FFF (1KB) -  Tile Map 2
+};
+
+struct scanline_state_t
+{
+    uint8_t scx;
+    uint8_t scy;
+    uint8_t ly;
 };
 
 class Ppu
@@ -73,6 +82,7 @@ private:
     uint8_t* screen_back = screen_buffers[0];  // Emulation thread writes here
     uint8_t* screen_front = screen_buffers[1]; // Rendering thread reads from here
 
+    scanline_state_t sst = {};
     void handle_oam_search();
     void handle_pixel_transfer();
     void handle_hblank();

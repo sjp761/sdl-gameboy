@@ -53,33 +53,47 @@ void Ppu::handle_oam_search()
 {
     if (dot >= OAM_SEARCH_DOTS)
     {
+        // Snapshot scroll and LY at the exact moment we enter pixel transfer
+        sst.scy = lcd->regs.scroll_y;
+        sst.scx = lcd->regs.scroll_x;
+        sst.ly = lcd->regs.lcd_y;
         lcd->set_mode(LCD_Modes::PIXEL_TRANSFER);
     }
 }
 
 void Ppu::handle_pixel_transfer() // We handle background drawing and window drawing here
 {
-    // Only draw the scanline once when we first enter pixel transfer mode (at dot 80)
-    if (dot == OAM_SEARCH_DOTS)
-    {
-        uint8_t scy = lcd->regs.scroll_y; // We read these at the beginning of each scanline start
-        uint8_t scx = lcd->regs.scroll_x;
-        uint8_t ly = lcd->regs.lcd_y;
-    }
     if (dot >= OAM_SEARCH_DOTS + PIXEL_TRANSFER_DOTS)
     {
         lcd->set_mode(LCD_Modes::HBLANK);
-        for (int i = 0; i < 160; i++) //i is the pixel x position
+        for (int i = 0; i < 160; i++) //i is the pixel x position in the scanline
         {
             uint16_t tile_map_base_addr = lcd->regs.lcd_control.bg_tile_map_display_select ? 0x9C00 : 0x9800; //Which tile map to use for background
-            uint8_t scy = lcd->regs.scroll_y; // Scroll Y, starting Y position in the background
-            uint8_t scx = lcd->regs.scroll_x; // Scroll X, starting X position in the background
-            uint8_t ly = lcd->regs.lcd_y;     // Current scanline (LY)
-            uint8_t* vram_base_ptr = reinterpret_cast<uint8_t*>(vram_back); // Base pointer to VRAM back buffer, use for 8000 addressing method
-            uint8_t* tile_map_base_ptr = vram_base_ptr + (tile_map_base_addr - 0x8000); // Pointer to the start of the selected tile map
             uint16_t tile_data_base_addr = lcd->regs.lcd_control.bg_window_tile_data_select ? 0x8000 : 0x9000; // Bit 4 determines adressing mode, 8000 or 9000 is the base addr, 8000 uses unsigned math while 9000 uses signed math
-            uint8_t* tile_data_base_ptr = vram_base_ptr + (tile_data_base_addr - 0x8000); // Pointer to the start of the selected tile data
+            uint8_t scy = sst.scy; // Scroll Y, starting Y position in the background
+            uint8_t scx = sst.scx; // Scroll X, starting X position in the background
+            uint8_t ly = sst.ly;     // Current scanline (LY)
+            uint8_t* vram_base_ptr = reinterpret_cast<uint8_t*>(vram_back); // Base pointer to VRAM back buffer
+            uint8_t* tile_map_base_ptr = vram_base_ptr + (tile_map_base_addr - 0x8000); // Pointer to the start of the selected tile map
 
+            uint8_t tile_row = ((scy + ly) & 255) / 8; // The row within the entire 32*32 high background (0-255), dividing by 8 (rather than modding by 32) makes a bit more sense here as it seems it will give the actual tile
+            uint8_t tile_col = ((scx + i) & 255) / 8; // The column within the entire 32*32 wide background (0-255)
+            uint8_t tile_index = tile_map_base_ptr[tile_row * TILE_MAP_WIDTH + tile_col]; // Get the tile index from the tile map
+            // Calculate the address of the tile data
+            uint16_t tile_data_addr;
+            if (tile_data_base_addr == 0x8000)
+                tile_data_addr = 0x8000 + (tile_index * 16); // Each tile is 16 bytes, tile indices always range from 0-255
+            else
+                tile_data_addr = 0x9000 + (static_cast<int8_t>(tile_index) * 16); // Signed index for 9000 addressing mode, casting uint8_t might be risky but worth a shot
+            uint8_t line_within_tile = (scy + ly) % 8; // Which line within the tile we are drawing (0-7), scy is needed here otherwise text will appear garbled 
+            uint8_t pixel_within_tile = (scx + i) % 8; // Which pixel within the tile we are drawing (0-7), since SCX and SCY can be between 0 and 255 (not 32) the gameboy can render tiles partially (like half a tile on the left side of the screen)
+            uint8_t byte1 = vram_base_ptr[tile_data_addr - 0x8000 + (line_within_tile * 2)];     // Each line is 2 bytes so multiply by 2
+            uint8_t byte2 = vram_base_ptr[tile_data_addr - 0x8000 + (line_within_tile * 2) + 1]; // Second byte
+            uint8_t bit_index = 7 - pixel_within_tile; // Bits are ordered from MSB to LSB, so we need to invert the pixel index
+            uint8_t color_bit0 = (byte1 >> bit_index) & 0x01; // Get the bit for color 0
+            uint8_t color_bit1 = (byte2 >> bit_index) & 0x01; // Get the bit for color 1
+            uint8_t color_id = (color_bit1 << 1) | color_bit0;
+            screen_back[ly * SCREEN_WIDTH + i] = color_id; // Write the color ID to the screen buffer
         }
 
     }

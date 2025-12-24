@@ -120,8 +120,21 @@ void SDLContainer::render(const uint8_t* display)
         // Lock texture and copy pixel data
         void* pixels;
         int pitch;
-        if (SDL_LockTexture(texture.get(), nullptr, &pixels, &pitch)) {
-            SDL_UnlockTexture(texture.get()); //Placeholder for now because display data encoding needs to be decided
+        if (SDL_LockTexture(texture.get(), nullptr, &pixels, &pitch))
+        {
+            uint32_t* pixel_data = static_cast<uint32_t*>(pixels);
+            for (int y = 0; y < DEFAULT_SURFACE_HEIGHT; y++) 
+            {
+                for (int x = 0; x < DEFAULT_SURFACE_WIDTH; x++)
+                {
+                    uint8_t palette_index = display[y * DEFAULT_SURFACE_WIDTH + x];
+                    // Map palette index (0-3) to color
+                    if (palette_index < 4) {
+                        pixel_data[y * (pitch / 4) + x] = gameboy_palette[palette_index];
+                    }
+                }
+            }
+            SDL_UnlockTexture(texture.get());
         } 
         else 
         {
