@@ -45,11 +45,11 @@ void Timer::tick()
 {
     uint16_t old_div = div++;
 
-    bool timer_update = false;
-    switch (tac & 0b11) {
-        case 0: // 4096 Hz
+    bool timer_update = false; // How I believe this is intended to work: the timer is effectively checking for an overflow from bit n to bit n+1
+    switch (tac & 0b11) { // Ex: old_div = 0b1111 or 15, div = 0b10000 or 16: there is a carry from bit 3 to bit 4, signifying a virtual overflow (if the available bits would be [n:0]) meaning 16 t states have passed
+        case 0: // 4096 Hz 
             // Falling edge of bit 9 (from 1->0)
-            timer_update = (old_div & (1 << 9)) && !(div & (1 << 9));
+            timer_update = (old_div & (1 << 9)) && !(div & (1 << 9)); // There is a quirk where tima increments when div is 0 and old div has the specific bit enabled so check this way
             break;
         case 1: // 262144 Hz
             // Falling edge of bit 3
