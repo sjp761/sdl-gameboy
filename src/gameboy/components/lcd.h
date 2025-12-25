@@ -22,6 +22,18 @@ struct lcd_control_register
                              lcd_enable(1) {}
 };
 
+enum class lcd_control_bits : uint8_t
+{
+    BG_DISPLAY = 0,
+    OBJ_DISPLAY_ENABLE = 1,
+    OBJ_SIZE = 2,
+    BG_TILE_MAP_DISPLAY_SELECT = 3,
+    BG_WINDOW_TILE_DATA_SELECT = 4,
+    WINDOW_DISPLAY_ENABLE = 5,
+    WINDOW_TILE_MAP_DISPLAY_SELECT = 6,
+    LCD_ENABLE = 7
+};
+
 // LCD Status Register (FF41) bit-field struct
 struct lcd_status_register
 {
@@ -37,6 +49,16 @@ struct lcd_status_register
     lcd_status_register() : mode_flag(1), lyc_eq_ly_flag(0), mode_0_hblank_interrupt(0),
                            mode_1_vblank_interrupt(0), mode_2_oam_interrupt(0),
                            lyc_eq_ly_interrupt(0), unused(0) {}
+};
+
+enum class lcd_status_bits : uint8_t
+{
+    MODE_FLAG = 0,
+    LYC_EQ_LY_FLAG = 2,
+    MODE_0_HBLANK_INTERRUPT = 3,
+    MODE_1_VBLANK_INTERRUPT = 4,
+    MODE_2_OAM_INTERRUPT = 5,
+    LYC_EQ_LY_INTERRUPT = 6
 };
 
 struct lcd_registers
@@ -60,7 +82,7 @@ struct lcd_registers
 // Helper functions to convert between bit-field structs and uint8_t
 inline uint8_t lcd_control_to_byte(const lcd_control_register& ctrl)
 {
-    return *reinterpret_cast<const uint8_t*>(&ctrl);
+    return *reinterpret_cast<const uint8_t*>(&ctrl); // Casts address to a pointer then dereferences it
 }
 
 inline uint8_t lcd_status_to_byte(const lcd_status_register& status)
@@ -109,4 +131,7 @@ class LCD
         uint8_t lcd_read(uint16_t addr);
         void bump_ly();
         void set_mode(LCD_Modes mode);
+        uint8_t get_lcd_control_attr(lcd_control_bits bit);
+        uint8_t get_lcd_status_attr(lcd_status_bits bit);
+
 };

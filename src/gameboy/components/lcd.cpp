@@ -64,3 +64,15 @@ void LCD::set_mode(LCD_Modes mode)
 {
     regs.lcd_status.mode_flag = static_cast<uint8_t>(mode);
 }
+
+uint8_t LCD::get_lcd_control_attr(lcd_control_bits bit)
+{
+    uint8_t ctrl_byte = lcd_control_to_byte(regs.lcd_control);
+    return (ctrl_byte >> static_cast<uint8_t>(bit)) & 1;
+}
+
+uint8_t LCD::get_lcd_status_attr(lcd_status_bits bit)
+{
+    uint8_t status_byte = lcd_status_to_byte(regs.lcd_status);
+    return (status_byte >> static_cast<uint8_t>(bit)) & 1;
+}

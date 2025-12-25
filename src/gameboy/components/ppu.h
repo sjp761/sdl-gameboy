@@ -41,6 +41,12 @@ struct scanline_state_t
     uint8_t scx;
     uint8_t scy;
     uint8_t ly;
+    uint8_t wx;
+    uint8_t wy;
+    uint8_t window_line_counter; //Counts which line of the window is being drawn
+    bool wy_condition; //Whether window is currently being drawn on this scanline
+    bool wx_condition; //Whether window X position has been reached on this scanline
+    bool background_enabled; //Based on LCDC bit 0
 };
 
 class Ppu
@@ -87,4 +93,7 @@ private:
     void handle_pixel_transfer();
     void handle_hblank();
     void handle_vblank();
+    void render_background(int i);
+    void render_window(int i);
+    void set_pixel(int x, int y, int scx, int scy); // Set a pixel in the screen buffer, scx and scy are 0 when used for window rendering
 };
