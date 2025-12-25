@@ -21,8 +21,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->menuFile->addMenu(menuRecent);
     connect(menuRecent, &QMenu::triggered, this, &MainWindow::handleRecentFileAction);
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::openFile);
+#ifdef ENABLE_DEBUG_VIEWERS
     connect(this, &MainWindow::requestOpenTileViewer, this, &MainWindow::openTileViewer, Qt::QueuedConnection);
     connect(this, &MainWindow::requestOpenTileMapViewer, this, &MainWindow::openTileMapViewer, Qt::QueuedConnection);
+#endif
     
     // Auto-start emulator with bootrom only after UI is ready
     QTimer::singleShot(100, this, [this]() {
@@ -142,12 +144,14 @@ void MainWindow::startEmulator(const std::string& romPath)
         emu_ref = new_emu;
     }
     ui->centralwidget->emu_ref = new_emu;  // weak_ptr assignment
+#ifdef ENABLE_DEBUG_VIEWERS
     ui->centralwidget->tile_viewer_ptr = &tile_viewer;
     ui->centralwidget->tile_map_viewer_ptr = &tile_map_viewer;
     
     // Signal to open tile viewers on main thread (after emulator is set up)
     emit requestOpenTileViewer();
     emit requestOpenTileMapViewer();
+#endif
     
     emuThread = std::thread([this]() {
         std::shared_ptr<Emu> emu;
@@ -165,7 +169,7 @@ void MainWindow::startEmulator(const std::string& romPath)
     });
 }
 
-
+#ifdef ENABLE_DEBUG_VIEWERS
 void MainWindow::openTileViewer()
 {
     // This runs on the main thread (Qt's event loop thread)
@@ -181,3 +185,4 @@ void MainWindow::openTileMapViewer()
         tile_map_viewer.init();
     }
 }
+#endif

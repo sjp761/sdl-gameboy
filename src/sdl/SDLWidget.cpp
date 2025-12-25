@@ -1,8 +1,10 @@
 #include "SDLWidget.h"
 #include "SDLContainer.h"
 #include "ppu.h"
+#ifdef ENABLE_DEBUG_VIEWERS
 #include "SDL_TileViewer.h"
 #include "SDL_TileMapViewer.h"
+#endif
 #include <QVBoxLayout>
 #include <QResizeEvent>
 #include <QTimer>
@@ -42,6 +44,10 @@ void SDLWidget::renderFrame()
         // Render main screen using front buffer
         sdlcon.render(emu->get_ppu().get_screen_buffer());
 
+#ifdef ENABLE_DEBUG_VIEWERS
+        // Lock VRAM mutex while accessing buffers for debug viewers
+        std::lock_guard<std::mutex> lock(emu->get_ppu().get_vram_mutex());
+        
         // Update tile viewer if active
         if (tile_viewer_ptr) {
             if (tile_viewer_ptr->is_open()) {
@@ -56,6 +62,7 @@ void SDLWidget::renderFrame()
                 tile_map_viewer_ptr->render();
             }
         }
+#endif
     } else {
         sdlcon.render(nullptr);
     }

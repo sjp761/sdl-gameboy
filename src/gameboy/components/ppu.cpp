@@ -17,6 +17,8 @@ Ppu::Ppu() : bus(nullptr), lcd(nullptr), cpu(nullptr), dot(0)
 
 void Ppu::swap_buffers()
 {
+    // Lock mutex to prevent rendering thread from reading during swap
+    std::lock_guard<std::mutex> lock(vram_mutex);
     // Copy both to front buffer (better than pointer swap because rendering thread may be mid-read on one buffer)
     std::memcpy(screen_front, screen_back, SCREEN_BUFFER_SIZE);
     std::memcpy(vram_front, vram_back, sizeof(vram_layout));
@@ -74,7 +76,9 @@ void Ppu::handle_pixel_transfer() // We handle background drawing and window dra
         for (int i = 0; i < 160; i++)
         {
             render_background(i);
-            if (sst.wy <= sst.ly && (i >= sst.wx - 7) && lcd->get_lcd_control_attr(lcd_control_bits::WINDOW_DISPLAY_ENABLE)) // Window rendering condition
+            // Window rendering condition - use signed arithmetic to handle WX 0-6 edge case correctly
+            // When WX < 7, (wx - 7) becomes negative, and i >= negative is true starting from i=0
+            if (sst.wy <= sst.ly && i >= (static_cast<int>(sst.wx) - 7) && lcd->get_lcd_control_attr(lcd_control_bits::WINDOW_DISPLAY_ENABLE))
             {
                 render_window(i);
             }
@@ -100,8 +104,10 @@ void Ppu::handle_hblank()
         }
 
         // Increment window line counter if window is visible on this scanline
+        bool window_x_in_range = (sst.wx < 7) || ((sst.wx - 7) < SCREEN_WIDTH);
+        bool window_y_in_range = sst.wy < VISIBLE_SCANLINES;
         if (lcd->get_lcd_control_attr(lcd_control_bits::WINDOW_DISPLAY_ENABLE) &&
-            sst.wy <= sst.ly && sst.ly < VISIBLE_SCANLINES)
+            sst.wy <= sst.ly && window_y_in_range && window_x_in_range)
         {
             sst.window_line_counter++;
         }

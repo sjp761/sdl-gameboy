@@ -9,8 +9,10 @@
 #include <set>
 #include <string>
 #include "emu.h"
+#ifdef ENABLE_DEBUG_VIEWERS
 #include "SDL_TileViewer.h"
 #include "SDL_TileMapViewer.h"
+#endif
 class SDLWidget;
 class Emu;
 
@@ -37,17 +39,23 @@ public:
     SDLWidget* getSDLWidget();
     std::shared_ptr<Emu> emu_ref;
     std::mutex emu_ref_mutex; // Protects emu_ref access
+#ifdef ENABLE_DEBUG_VIEWERS
     SDL_TileViewer tile_viewer;
     SDL_TileMapViewer tile_map_viewer;
+#endif
 
 signals:
+#ifdef ENABLE_DEBUG_VIEWERS
     void requestOpenTileViewer();
     void requestOpenTileMapViewer();
+#endif
 
 public slots:
     void handleRecentFileAction(QAction* action);
+#ifdef ENABLE_DEBUG_VIEWERS
     void openTileViewer();
     void openTileMapViewer();
+#endif
 
 private:
     Ui::MainWindow *ui;

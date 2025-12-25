@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.16)
 
 project(sdl-gameboy VERSION 0.1.0 LANGUAGES C CXX)
 
+# Build configuration option: Debug includes tile viewers, Release doesn't
+option(ENABLE_DEBUG_VIEWERS "Enable debug tile and tilemap viewers" OFF)
+
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -46,11 +49,17 @@ if(QT_FOUND)
             src/sdl/SDLWidget.cpp
             src/sdl/SDLWidget.h
             src/sdl/SDL_SmartPointer.h
-            src/sdl/SDL_TileViewer.cpp
-            src/sdl/SDL_TileViewer.h
-            src/sdl/SDL_TileMapViewer.cpp
-            src/sdl/SDL_TileMapViewer.h
         )
+        
+        # Add debug viewer sources only if enabled
+        if(ENABLE_DEBUG_VIEWERS)
+            list(APPEND SDL_QT_SOURCES
+                src/sdl/SDL_TileViewer.cpp
+                src/sdl/SDL_TileViewer.h
+                src/sdl/SDL_TileMapViewer.cpp
+                src/sdl/SDL_TileMapViewer.h
+            )
+        endif()
 endif()
 
 # SDL-Qt GUI target (optional, if Qt is available)
@@ -77,6 +86,11 @@ if(QT_FOUND)
 
     target_link_libraries(sdl-gameboy-qt PRIVATE Qt${QT_VERSION_MAJOR}::Widgets SDL3::SDL3 SDL3_ttf::SDL3_ttf JsonCpp::JsonCpp)
     target_include_directories(sdl-gameboy-qt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/sdl ${GAMEBOY_INCLUDES})
+    
+    # Add compile definition for debug viewers if enabled
+    if(ENABLE_DEBUG_VIEWERS)
+        target_compile_definitions(sdl-gameboy-qt PRIVATE ENABLE_DEBUG_VIEWERS)
+    endif()
     
     # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
     if(${QT_VERSION} VERSION_LESS 6.1.0)

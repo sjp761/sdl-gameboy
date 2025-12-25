@@ -2,5 +2,6 @@
     "files.associations": {
         "iosfwd": "cpp",
         "iostream": "cpp"
-    }
+    },
+    "cmake.configureArgs": ["-DENABLE_DEBUG_VIEWERS=OFF"]
 }

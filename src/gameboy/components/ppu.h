@@ -66,6 +66,9 @@ public:
     
     // Swap buffers - call this once per frame from emulation thread
     void swap_buffers();
+    
+    // Get mutex for locking during VRAM access from rendering thread
+    std::mutex& get_vram_mutex() { return vram_mutex; }
 
     // VRAM accessors (no mutex needed - writing to back buffer)
     uint8_t vram_read(uint16_t address);
@@ -85,6 +88,9 @@ private:
     uint8_t screen_buffers[2][SCREEN_BUFFER_SIZE] = {};
     uint8_t* screen_back = screen_buffers[0];  // Emulation thread writes here
     uint8_t* screen_front = screen_buffers[1]; // Rendering thread reads from here
+    
+    // Mutex for thread-safe VRAM access from rendering thread
+    mutable std::mutex vram_mutex;
 
     scanline_state_t sst = {};
     void handle_oam_search();
