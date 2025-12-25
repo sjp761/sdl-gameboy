@@ -30,4 +30,6 @@ private:
     static constexpr int MAP_COLS = 32;
     static constexpr int MAP_ROWS = 32;
     static constexpr int MAP_SIZE = MAP_COLS * MAP_ROWS;
+    static constexpr int HEADER_HEIGHT = 30;  // Height for address header
+    static constexpr int BAR_WIDTH = 30;      // Width of separator bar between maps
 };

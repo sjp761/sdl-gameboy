@@ -70,23 +70,15 @@ void Ppu::handle_pixel_transfer() // We handle background drawing and window dra
     {
 
         lcd->set_mode(LCD_Modes::HBLANK);
-        if (sst.wy == sst.ly)
-        {
-            sst.wy_condition = true;
-        }
+
         for (int i = 0; i < 160; i++)
         {
             render_background(i);
-            if (i >= (sst.wx - 7))
-                sst.wx_condition = true;
-            if (sst.wy_condition && sst.wx_condition && lcd->get_lcd_control_attr(lcd_control_bits::WINDOW_DISPLAY_ENABLE))
+            if (sst.wy <= sst.ly && (i >= sst.wx - 7) && lcd->get_lcd_control_attr(lcd_control_bits::WINDOW_DISPLAY_ENABLE)) // Window rendering condition
             {
-               render_window(i);
+                render_window(i);
             }
-            if (i == 159 && sst.wy_condition)
-            {
-                sst.window_line_counter++;
-            }
+            
         }
     }
 }
@@ -105,8 +97,13 @@ void Ppu::handle_hblank()
         else
         {
             lcd->set_mode(LCD_Modes::OAM_SEARCH);
-            sst.wx_condition = false; // Reset WX condition for next scanline
+        }
 
+        // Increment window line counter if window is visible on this scanline
+        if (lcd->get_lcd_control_attr(lcd_control_bits::WINDOW_DISPLAY_ENABLE) &&
+            sst.wy <= sst.ly && sst.ly < VISIBLE_SCANLINES)
+        {
+            sst.window_line_counter++;
         }
     }
 }
@@ -119,9 +116,9 @@ void Ppu::handle_vblank()
         lcd->bump_ly();        
         if (lcd->regs.lcd_y >= SCANLINES_PER_FRAME)
         {
-            sst.window_line_counter = 0;
-            sst.wy_condition = false;
+            sst.window_line_counter = 0; // Reset window line counter at the start of a new frame
             lcd->regs.lcd_y = 0;
+            lcd->check_lyc();
             lcd->set_mode(LCD_Modes::OAM_SEARCH);
         }
     }

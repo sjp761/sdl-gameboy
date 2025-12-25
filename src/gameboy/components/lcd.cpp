@@ -46,18 +46,7 @@ uint8_t LCD::lcd_read(uint16_t addr)
 void LCD::bump_ly()
 {
     regs.lcd_y++;
-    if (regs.lcd_y == regs.lcd_y_compare)
-    {
-        regs.lcd_status.lyc_eq_ly_flag = 1;
-        if (regs.lcd_status.lyc_eq_ly_interrupt)
-        {
-            cpu->request_interrupt(Interrupts::InterruptMask::IT_LCDStat);
-        }
-    }
-    else
-    {
-        regs.lcd_status.lyc_eq_ly_flag = 0;
-    }
+    check_lyc();
 }
 
 void LCD::set_mode(LCD_Modes mode)
@@ -75,4 +64,20 @@ uint8_t LCD::get_lcd_status_attr(lcd_status_bits bit)
 {
     uint8_t status_byte = lcd_status_to_byte(regs.lcd_status);
     return (status_byte >> static_cast<uint8_t>(bit)) & 1;
+}
+
+void LCD::check_lyc()
+{
+    if (regs.lcd_y == regs.lcd_y_compare)
+    {
+        regs.lcd_status.lyc_eq_ly_flag = 1;
+        if (regs.lcd_status.lyc_eq_ly_interrupt)
+        {
+            cpu->request_interrupt(Interrupts::InterruptMask::IT_LCDStat);
+        }
+    }
+    else
+    {
+        regs.lcd_status.lyc_eq_ly_flag = 0;
+    }
 }

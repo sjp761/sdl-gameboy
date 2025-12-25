@@ -133,5 +133,6 @@ class LCD
         void set_mode(LCD_Modes mode);
         uint8_t get_lcd_control_attr(lcd_control_bits bit);
         uint8_t get_lcd_status_attr(lcd_status_bits bit);
+        void check_lyc();
 
 };

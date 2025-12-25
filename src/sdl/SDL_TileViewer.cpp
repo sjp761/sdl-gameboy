@@ -2,7 +2,7 @@
 #include <cstring>
 
 SDL_TileViewer::SDL_TileViewer()
-    : window(nullptr), renderer(nullptr)
+    : window(nullptr), renderer(nullptr), font(nullptr)
 {
 }
 
@@ -13,8 +13,23 @@ SDL_TileViewer::~SDL_TileViewer()
 
 void SDL_TileViewer::init()
 {
-    // Calculate window dimensions for 24x16 tile grid
-    int window_width = TILES_PER_ROW * SCALED_TILE_SIZE;
+    // Initialize SDL_ttf
+    if (!TTF_WasInit()) {
+        TTF_Init();
+    }
+    
+    // Load a system font (try to use a common system font)
+    font = TTF_OpenFont("/System/Library/Fonts/Helvetica.ttc", 10);
+    if (!font) {
+        // Fallback to another common font if Helvetica not found
+        font = TTF_OpenFont("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", 10);
+    }
+    if (!font) {
+        SDL_Log("Warning: Could not load font, tile numbers will not be displayed");
+    }
+    
+    // Calculate window dimensions for 24x16 tile grid with number display
+    int window_width = TILES_PER_ROW * BOX_WIDTH;
     int window_height = TILES_PER_COL * SCALED_TILE_SIZE;
     
     window = SDL_CreateWindow("VRAM Tile Viewer (384 Tiles)", 
@@ -48,6 +63,11 @@ void SDL_TileViewer::cleanup()
 {
     tile_texture.reset();
     
+    if (font) {
+        TTF_CloseFont(font);
+        font = nullptr;
+    }
+    
     if (renderer) {
         SDL_DestroyRenderer(renderer);
         renderer = nullptr;
@@ -57,6 +77,8 @@ void SDL_TileViewer::cleanup()
         SDL_DestroyWindow(window);
         window = nullptr;
     }
+    
+    TTF_Quit();
 }
 
 uint32_t SDL_TileViewer::get_color(uint8_t pixel_value)
@@ -103,19 +125,49 @@ void SDL_TileViewer::render_tile(const uint8_t* vram, int tile_index, int x, int
     
     SDL_UnlockTexture(tile_texture.get());
     
-    // Render scaled tile
-    SDL_FRect dest_rect = {
-        static_cast<float>(x),
+    // Render tile sprite on the right side
+    SDL_FRect tile_dest_rect = {
+        static_cast<float>(x + NUMBER_WIDTH),
         static_cast<float>(y),
         static_cast<float>(SCALED_TILE_SIZE),
         static_cast<float>(SCALED_TILE_SIZE)
     };
+    SDL_RenderTexture(renderer, tile_texture.get(), nullptr, &tile_dest_rect);
     
-    SDL_RenderTexture(renderer, tile_texture.get(), nullptr, &dest_rect);
-    
-    // Draw border around tile (subtle grid)
+    // Draw border around tile
     SDL_SetRenderDrawColor(renderer, 60, 60, 60, 255);
-    SDL_RenderRect(renderer, &dest_rect);
+    SDL_RenderRect(renderer, &tile_dest_rect);
+    
+    // Render tile number on the left if font is available
+    if (font) {
+        char tile_number_str[16];
+        snprintf(tile_number_str, sizeof(tile_number_str), "%d", tile_index);
+        
+        SDL_Color text_color = {255, 255, 255, 255}; // White text
+        SDL_Surface* text_surface = TTF_RenderText_Solid(font, tile_number_str, 0, text_color);
+        
+        if (text_surface) {
+            SDL_Texture* text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
+            
+            if (text_texture) {
+                int text_width = text_surface->w;
+                int text_height = text_surface->h;
+                
+                // Center text vertically and position it on the left side
+                SDL_FRect text_rect = {
+                    static_cast<float>(x + (NUMBER_WIDTH - text_width) / 2),
+                    static_cast<float>(y + (SCALED_TILE_SIZE - text_height) / 2),
+                    static_cast<float>(text_width),
+                    static_cast<float>(text_height)
+                };
+                
+                SDL_RenderTexture(renderer, text_texture, nullptr, &text_rect);
+                SDL_DestroyTexture(text_texture);
+            }
+            
+            SDL_DestroySurface(text_surface);
+        }
+    }
 }
 
 void SDL_TileViewer::update(const uint8_t* vram)
@@ -131,7 +183,7 @@ void SDL_TileViewer::update(const uint8_t* vram)
         int row = tile_idx / TILES_PER_ROW;
         int col = tile_idx % TILES_PER_ROW;
         
-        int x = col * SCALED_TILE_SIZE;
+        int x = col * BOX_WIDTH;
         int y = row * SCALED_TILE_SIZE;
         
         render_tile(vram, tile_idx, x, y);

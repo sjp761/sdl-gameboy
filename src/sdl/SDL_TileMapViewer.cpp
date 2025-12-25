@@ -26,9 +26,12 @@ SDL_TileMapViewer::~SDL_TileMapViewer()
 
 void SDL_TileMapViewer::init()
 {
-    int window_width = MAP_COLS * SCALED_TILE_SIZE * 2; // Double width for both tile maps
-    int window_height = MAP_ROWS * SCALED_TILE_SIZE;
-    window = SDL_CreateWindow("Tile Map Viewer (Both Maps)", window_width, window_height, SDL_WINDOW_RESIZABLE);
+    int map_width = MAP_COLS * SCALED_TILE_SIZE;
+    int map_height = MAP_ROWS * SCALED_TILE_SIZE;
+    int window_width = map_width * 2 + BAR_WIDTH;  // Two maps plus separator bar
+    int window_height = map_height + HEADER_HEIGHT;  // Add space for header
+    
+    window = SDL_CreateWindow("Tile Map Viewer (0x9800 | 0x9C00)", window_width, window_height, SDL_WINDOW_RESIZABLE);
     if (!window) {
         SDL_Log("Failed to create tile map viewer window: %s", SDL_GetError());
         return;
@@ -83,18 +86,58 @@ void SDL_TileMapViewer::update(const uint8_t* tilemap)
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White background
     SDL_RenderClear(renderer);
     
+    int map_width = MAP_COLS * SCALED_TILE_SIZE;
+    int map_height = MAP_ROWS * SCALED_TILE_SIZE;
+    int map_y_offset = HEADER_HEIGHT;
+    int bar_x = map_width;  // Bar position between maps
+    
+    // Render headers
+    if (font) {
+        SDL_Color headerColor = {0, 0, 0, 255}; // Black text
+        
+        // Left map header: 0x9800
+        SDL_Surface* leftHeaderSurface = TTF_RenderText_Blended(font, "0x9800", 0, headerColor);
+        if (leftHeaderSurface) {
+            SDL_Texture* leftHeaderTexture = SDL_CreateTextureFromSurface(renderer, leftHeaderSurface);
+            if (leftHeaderTexture) {
+                SDL_FRect leftHeaderRect = {10.0f, 5.0f, (float)leftHeaderSurface->w, (float)leftHeaderSurface->h};
+                SDL_RenderTexture(renderer, leftHeaderTexture, nullptr, &leftHeaderRect);
+                SDL_DestroyTexture(leftHeaderTexture);
+            }
+            SDL_DestroySurface(leftHeaderSurface);
+        }
+        
+        // Right map header: 0x9C00
+        SDL_Surface* rightHeaderSurface = TTF_RenderText_Blended(font, "0x9C00", 0, headerColor);
+        if (rightHeaderSurface) {
+            SDL_Texture* rightHeaderTexture = SDL_CreateTextureFromSurface(renderer, rightHeaderSurface);
+            if (rightHeaderTexture) {
+                SDL_FRect rightHeaderRect = {static_cast<float>(map_width + BAR_WIDTH + 10), 5.0f, (float)rightHeaderSurface->w, (float)rightHeaderSurface->h};
+                SDL_RenderTexture(renderer, rightHeaderTexture, nullptr, &rightHeaderRect);
+                SDL_DestroyTexture(rightHeaderTexture);
+            }
+            SDL_DestroySurface(rightHeaderSurface);
+        }
+    }
+    
+    // Render separator bar
+    SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);  // Gray bar
+    SDL_FRect barRect = {static_cast<float>(bar_x), static_cast<float>(map_y_offset), 
+                         static_cast<float>(BAR_WIDTH), static_cast<float>(map_height)};
+    SDL_RenderFillRect(renderer, &barRect);
+    
     // Render both tile maps side by side
     // Left side: tile_map_1 (passed as tilemap)
     // Right side: tile_map_2 (tilemap + 0x400)
     for (int map_idx = 0; map_idx < 2; ++map_idx) {
-        int x_offset = map_idx * MAP_COLS * SCALED_TILE_SIZE;
+        int x_offset = (map_idx == 0) ? 0 : (map_width + BAR_WIDTH);
         const uint8_t* current_map = tilemap + (map_idx * 0x400);
         
         for (int idx = 0; idx < MAP_SIZE; ++idx) {
             int row = idx / MAP_COLS;
             int col = idx % MAP_COLS;
             int x = x_offset + col * SCALED_TILE_SIZE;
-            int y = row * SCALED_TILE_SIZE;
+            int y = map_y_offset + row * SCALED_TILE_SIZE;
             
             SDL_FRect rect = { static_cast<float>(x), static_cast<float>(y), 
                              static_cast<float>(SCALED_TILE_SIZE), static_cast<float>(SCALED_TILE_SIZE) };

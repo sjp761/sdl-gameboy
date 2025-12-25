@@ -44,8 +44,6 @@ struct scanline_state_t
     uint8_t wx;
     uint8_t wy;
     uint8_t window_line_counter; //Counts which line of the window is being drawn
-    bool wy_condition; //Whether window is currently being drawn on this scanline
-    bool wx_condition; //Whether window X position has been reached on this scanline
     bool background_enabled; //Based on LCDC bit 0
 };
 
