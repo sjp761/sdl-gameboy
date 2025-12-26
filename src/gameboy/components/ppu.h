@@ -97,7 +97,5 @@ private:
     void handle_pixel_transfer();
     void handle_hblank();
     void handle_vblank();
-    void render_background(int i);
-    void render_window(int i);
-    void set_pixel(int x, int y, int scx, int scy); // Set a pixel in the screen buffer, scx and scy are 0 when used for window rendering
+    void set_pixel(int x, int y, int offx, int offy, bool is_window);
 };

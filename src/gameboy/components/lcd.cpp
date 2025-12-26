@@ -21,10 +21,41 @@ void LCD::lcd_write(uint16_t addr, uint8_t value)
             break;
         case 0xFF41: // LCD Status
             byte_to_lcd_status(regs.lcd_status, value);
+            check_lyc();
+            break;
+        case 0xFF42: // SCY
+            regs.scroll_y = value;
+            break;
+        case 0xFF43: // SCX
+            regs.scroll_x = value;
+            break;
+        case 0xFF44: // LY
+            regs.lcd_y = 0; // Writing to LY resets it to 0
+            check_lyc(); // Check interrupts after reset
+            break;
+        case 0xFF45: // LYC
+            regs.lcd_y_compare = value;
+            check_lyc();
+            break;
+        case 0xFF46: // DMA handled in bus component
+            break;
+        case 0xFF47: // BGP
+            regs.bg_palette = value;
+            break;
+        case 0xFF48: // OBP0
+            regs.obj_palette_0 = value;
+            break;
+        case 0xFF49: // OBP1
+            regs.obj_palette_1 = value;
+            break;
+        case 0xFF4A: // WY
+            regs.window_y = value;
+            break;
+        case 0xFF4B: // WX
+            regs.window_x = value;
             break;
         default:
-            // For other registers, use the old method
-            *(reinterpret_cast<uint8_t*>(&regs) + (addr - 0xFF40)) = value;
+            // Ignore invalid writes
             break;
     }
 }
@@ -37,9 +68,28 @@ uint8_t LCD::lcd_read(uint16_t addr)
             return lcd_control_to_byte(regs.lcd_control);
         case 0xFF41: // LCD Status
             return lcd_status_to_byte(regs.lcd_status);
+        case 0xFF42: // SCY
+            return regs.scroll_y;
+        case 0xFF43: // SCX
+            return regs.scroll_x;
+        case 0xFF44: // LY
+            return regs.lcd_y;
+        case 0xFF45: // LYC
+            return regs.lcd_y_compare;
+        case 0xFF46: // DMA
+            return 0xFF; // Not readable from LCD usually
+        case 0xFF47: // BGP
+            return regs.bg_palette;
+        case 0xFF48: // OBP0
+            return regs.obj_palette_0;
+        case 0xFF49: // OBP1
+            return regs.obj_palette_1;
+        case 0xFF4A: // WY
+            return regs.window_y;
+        case 0xFF4B: // WX
+            return regs.window_x;
         default:
-            // For other registers, use the old method
-            return *(reinterpret_cast<uint8_t*>(&regs) + (addr - 0xFF40));
+            return 0xFF;
     }
 }
 
