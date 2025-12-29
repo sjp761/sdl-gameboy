@@ -84,6 +84,7 @@ void Cpu::execute_x0_instructions() {
                 if (check_condition(cc)) {
                     int8_t offset = static_cast<int8_t>(fetched_data & 0xFF);
                     regs.pc += offset;
+                    branch_taken = true;
                 }
             }
             break;

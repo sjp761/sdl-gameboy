@@ -131,5 +131,6 @@ class Cpu
         bool stepping;
         bool ime = 0; // Interrupt Master Enable flag
         bool ime_delay = 0;
+        bool branch_taken = false;
 };
 

@@ -37,7 +37,13 @@ bool Cpu::cpu_step()
         fetch_instruction();
         fetch_data();
         execute_instruction();
-        emu_cycles(INSTRUCTION_TABLE[opcode.whole].cycles/4);
+        if (!branch_taken)
+            emu_cycles(INSTRUCTION_TABLE[opcode.whole].cycles);
+        else
+        {
+            emu_cycles(INSTRUCTION_TABLE[opcode.whole].cycles_branch);
+            branch_taken = false; // Reset for next instruction
+        }
     }
     else
     {
@@ -111,7 +117,7 @@ void Cpu::execute_instruction()
 
 void Cpu::read_serial_debug()
 {
-    if (bus->bus_read (0xFF02) == 0x81) 
+    if (bus->bus_read(0xFF02) == 0x81) 
      {
         char c = static_cast<char>(bus->bus_read(0xFF01));
         bus->serial_buffer += c;

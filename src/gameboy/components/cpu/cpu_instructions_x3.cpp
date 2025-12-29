@@ -26,20 +26,19 @@ void Cpu::handle_jp_and_interrupts() {
         case 6: // DI (0xF3) - Disable Interrupts
             ime = false;
             ime_delay = false;
-            // total 4
             break;
         case 7: // EI (0xFB) - Enable Interrupts
             ime_delay = true; // Enable after next instruction
-            // total 4
             break;
     }
 }
 
 void Cpu::handle_ret_conditional() {
     ConditionCode cc = static_cast<ConditionCode>(opcode.y);
-    if (check_condition(cc)) {
+    if (check_condition(cc)) 
+    {
         regs.pc = stack_pop16();
-    } else {
+        branch_taken = true;
     }
 }
 
@@ -60,7 +59,7 @@ void Cpu::handle_call_conditional() {
     if (check_condition(cc)) {
         stack_push16(regs.pc);
         regs.pc = fetched_data;
-    } else {
+        branch_taken = true;
     }
 }
 
@@ -69,10 +68,8 @@ void Cpu::execute_x3_instructions() {
     switch (opcode.z) {
         case 0: // RET conditional
             if (opcode.y < 4) 
-            {
                 handle_ret_conditional();
-
-            }
+            
             else if (opcode.y == 5)
             {
                 // ADD SP, e8
@@ -139,11 +136,11 @@ void Cpu::execute_x3_instructions() {
             break;
             
         case 2: 
-            if (opcode.y < 4) {
+            if (opcode.y < 4) { // JP conditional
                 ConditionCode cc = static_cast<ConditionCode>(opcode.y);
                 if (check_condition(cc)) {
                     regs.pc = fetched_data;
-                } else {
+                    branch_taken = true;
                 }
             }
             else if (opcode.y == 6)
@@ -186,16 +183,14 @@ void Cpu::execute_x3_instructions() {
             }
             break;
             
-        case 5: // PUSH r16 or CALL
-            if (opcode.y & 1) {
-                // CALL (0xCD) for y=1
-                if (opcode.y == 1) {
-                    stack_push16(regs.pc);
-                    regs.pc = fetched_data;
-                }
+        case 5: // CALL
+            if (opcode.y == 1) {
+                stack_push16(regs.pc);
+                regs.pc = fetched_data;
+            }
                 // Other odd y values: CB prefix or not used
-            } else {
-                // PUSH r16 (even y)
+             else {
+                // PUSH r16 
                 handle_push_r16();
             }
             break;

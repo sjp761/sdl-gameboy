@@ -152,20 +152,32 @@ void SDL_TileMapViewer::update(const uint8_t* tilemap)
 
             // Render tile number as text using SDL_ttf (if font is available)
             if (font) {
-                char numStr[4];
-                snprintf(numStr, sizeof(numStr), "%d", current_map[idx]);
-                SDL_Color textColor = {255, 255, 255, 255};
-                SDL_Surface* textSurface = TTF_RenderText_Blended(font, numStr, 0, textColor);
-                if (textSurface) {
-                    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-                    if (textTexture) {
-                        int tw = textSurface->w;
-                        int th = textSurface->h;
-                        SDL_FRect textRect = {rect.x + (rect.w-tw)/2, rect.y + (rect.h-th)/2, (float)tw, (float)th};
-                        SDL_RenderTexture(renderer, textTexture, nullptr, &textRect);
-                        SDL_DestroyTexture(textTexture);
+                char tile_number_str[16];
+                snprintf(tile_number_str, sizeof(tile_number_str), "%d", current_map[idx]);
+                
+                SDL_Color text_color = {255, 255, 255, 255}; // White text
+                SDL_Surface* text_surface = TTF_RenderText_Solid(font, tile_number_str, 0, text_color);
+                
+                if (text_surface) {
+                    SDL_Texture* text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
+                    
+                    if (text_texture) {
+                        int text_width = text_surface->w;
+                        int text_height = text_surface->h;
+                        
+                        // Center text in the tile rect
+                        SDL_FRect text_rect = {
+                            static_cast<float>(rect.x + (rect.w - text_width) / 2),
+                            static_cast<float>(rect.y + (rect.h - text_height) / 2),
+                            static_cast<float>(text_width),
+                            static_cast<float>(text_height)
+                        };
+                        
+                        SDL_RenderTexture(renderer, text_texture, nullptr, &text_rect);
+                        SDL_DestroyTexture(text_texture);
                     }
-                    SDL_DestroySurface(textSurface);
+                    
+                    SDL_DestroySurface(text_surface);
                 }
             }
         }
