@@ -15,6 +15,19 @@ Emu::Emu()
     ctx.ticks = 0;
 }
 
+Emu::Emu(bool test_mode_enable)
+    : rom(),
+      bus(test_mode_enable),
+      cpu(),
+      timer(),
+      dma(),
+      lcd()
+{
+    ctx.paused = false;
+    ctx.running = true;
+    ctx.ticks = 0;
+}
+
 void Emu::set_component_pointers()
 {
   cpu.set_cmp(&bus, &timer, &dma, &ppu);

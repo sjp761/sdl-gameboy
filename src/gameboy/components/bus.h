@@ -65,4 +65,8 @@ class Bus
         uint8_t audio_regs[MemoryMap::AUDIO_SIZE] = {}; // Audio registers (0xFF10-0xFF26)
         uint8_t wave_ram[MemoryMap::WAVE_RAM_SIZE] = {}; // Wave Pattern RAM (0xFF30-0xFF3F)
         std::string serial_buffer = "";
+
+        std::unique_ptr<uint8_t[]> opcode_test_mem = std::make_unique<uint8_t[]>(64*1024); // 64KB flat memory for opcode tests
+        bool test_mode = false; // Flag to indicate if in test mode
+        Bus(bool test_mode_enable);
 };

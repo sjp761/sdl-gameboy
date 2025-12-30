@@ -2,117 +2,119 @@ cmake_minimum_required(VERSION 3.16)
 
 project(sdl-gameboy VERSION 0.1.0 LANGUAGES C CXX)
 
-# Build configuration option: Debug includes tile viewers, Release doesn't
-option(ENABLE_DEBUG_VIEWERS "Enable debug tile and tilemap viewers" OFF)
-
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-## Use C++20 for atomic shared_ptr and other modern features
+# Use C++20 for modern features
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
-# Find Qt packages (optional for SDL-Qt integration)
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets)
-if(QT_FOUND)
-    find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets)
-endif()
+# Find dependencies
+find_package(Qt6 COMPONENTS Widgets REQUIRED)
 
-
-# Find SDL3 and other dependencies
 find_package(SDL3 REQUIRED)
 find_package(SDL3_ttf REQUIRED)
 find_package(jsoncpp REQUIRED)
 
+# Include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-# Source files for gameboy components
+# Source files
 file(GLOB GAMEBOY_SRC "src/gameboy/*.cpp")
 file(GLOB GAMEBOY_CMP_SRC "src/gameboy/components/*.cpp")
 file(GLOB CPU_SRC "src/gameboy/components/cpu/*.cpp")
-file(GLOB SDL_SRC "src/sdl/*.cpp")
 
-# Common include directories
 set(GAMEBOY_INCLUDES src/gameboy src/sdl src/gameboy/components src/gameboy/components/cpu)
 
-# SDL-Qt GUI executable (if Qt is available)
-if(QT_FOUND)
-        set(SDL_QT_SOURCES
-            src/sdl/main.cpp
-            src/sdl/mainwindow.cpp
-            src/sdl/mainwindow.h
-            src/sdl/mainwindow.ui
-            src/sdl/SDLContainer.cpp
-            src/sdl/SDLContainer.h
-            src/sdl/SDLWidget.cpp
-            src/sdl/SDLWidget.h
-            src/sdl/SDL_SmartPointer.h
-        )
-        
-        # Add debug viewer sources only if enabled
-        if(ENABLE_DEBUG_VIEWERS)
-            list(APPEND SDL_QT_SOURCES
-                src/sdl/SDL_TileViewer.cpp
-                src/sdl/SDL_TileViewer.h
-                src/sdl/SDL_TileMapViewer.cpp
-                src/sdl/SDL_TileMapViewer.h
-            )
-        endif()
-endif()
+# Common SDL-Qt sources (excluding debug viewers)
+set(SDL_QT_COMMON_SOURCES
+    src/sdl/main.cpp
+    src/sdl/mainwindow.cpp
+    src/sdl/mainwindow.h
+    src/sdl/mainwindow.ui
+    src/sdl/SDLContainer.cpp
+    src/sdl/SDLContainer.h
+    src/sdl/SDLWidget.cpp
+    src/sdl/SDLWidget.h
+    src/sdl/SDL_SmartPointer.h
+)
 
-# SDL-Qt GUI target (optional, if Qt is available)
-if(QT_FOUND)
-    if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-        qt_add_executable(sdl-gameboy-qt
-            MANUAL_FINALIZATION
-            ${SDL_QT_SOURCES}
-        )
-    else()
-        if(ANDROID)
-            add_library(sdl-gameboy-qt SHARED ${SDL_QT_SOURCES})
-        else()
-            add_executable(sdl-gameboy-qt ${SDL_QT_SOURCES})
-        endif()
-    endif()
+# Debug viewer sources
+set(DEBUG_VIEWER_SOURCES
+    src/sdl/SDL_TileViewer.cpp
+    src/sdl/SDL_TileViewer.h
+    src/sdl/SDL_TileMapViewer.cpp
+    src/sdl/SDL_TileMapViewer.h
+)
 
-    # Add emulator sources so symbols resolve when starting Emu from the Qt app
-    target_sources(sdl-gameboy-qt PRIVATE
+# Function to create Qt executable
+function(create_qt_executable TARGET_NAME SOURCES)
+    qt_add_executable(${TARGET_NAME}
+        MANUAL_FINALIZATION
+        ${SOURCES}
+    )
+
+    target_sources(${TARGET_NAME} PRIVATE
         ${GAMEBOY_SRC}
         ${GAMEBOY_CMP_SRC}
         ${CPU_SRC}
     )
 
-    target_link_libraries(sdl-gameboy-qt PRIVATE Qt${QT_VERSION_MAJOR}::Widgets SDL3::SDL3 SDL3_ttf::SDL3_ttf JsonCpp::JsonCpp)
-    target_include_directories(sdl-gameboy-qt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/sdl ${GAMEBOY_INCLUDES})
-    
-    # Add compile definition for debug viewers if enabled
-    if(ENABLE_DEBUG_VIEWERS)
-        target_compile_definitions(sdl-gameboy-qt PRIVATE ENABLE_DEBUG_VIEWERS)
-    endif()
-    
-    # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
-    if(${QT_VERSION} VERSION_LESS 6.1.0)
-        set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.sdl-gameboy)
-    endif()
-    
-    set_target_properties(sdl-gameboy-qt PROPERTIES
-        ${BUNDLE_ID_OPTION}
+    target_link_libraries(${TARGET_NAME} PRIVATE
+        Qt6::Widgets
+        SDL3::SDL3
+        SDL3_ttf::SDL3_ttf
+        JsonCpp::JsonCpp
+    )
+
+    target_include_directories(${TARGET_NAME} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/sdl
+        ${GAMEBOY_INCLUDES}
+    )
+
+    set_target_properties(${TARGET_NAME} PROPERTIES
         MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
         MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
         MACOSX_BUNDLE TRUE
         WIN32_EXECUTABLE TRUE
     )
 
-    if(QT_VERSION_MAJOR EQUAL 6)
-        qt_finalize_executable(sdl-gameboy-qt)
-    endif()
+    qt_finalize_executable(${TARGET_NAME})
 
     include(GNUInstallDirs)
-    install(TARGETS sdl-gameboy-qt
+    install(TARGETS ${TARGET_NAME}
         BUNDLE DESTINATION .
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
+endfunction()
+
+# Regular SDL-Qt GUI executable
+if(Qt6_FOUND)
+    create_qt_executable(sdl-gameboy-qt "${SDL_QT_COMMON_SOURCES}")
 endif()
+
+# Debug viewers executable
+if(Qt6_FOUND)
+    set(DEBUG_SOURCES ${SDL_QT_COMMON_SOURCES} ${DEBUG_VIEWER_SOURCES})
+    create_qt_executable(sdl-gameboy-qt-debug-viewers "${DEBUG_SOURCES}")
+    target_compile_definitions(sdl-gameboy-qt-debug-viewers PRIVATE ENABLE_DEBUG_VIEWERS)
+endif()
+
+# Opcode test executable
+add_executable(opcode-test
+    tests/opcodetest.cpp
+    tests/test_helper.cpp
+)
+
+target_sources(opcode-test PRIVATE
+    ${GAMEBOY_SRC}
+    ${GAMEBOY_CMP_SRC}
+    ${CPU_SRC}
+)
+
+target_link_libraries(opcode-test PRIVATE JsonCpp::JsonCpp)
+
+target_include_directories(opcode-test PRIVATE ${GAMEBOY_INCLUDES})

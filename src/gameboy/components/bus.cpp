@@ -8,9 +8,14 @@
 #include <iostream>
 #include "lcd.h"
 
-Bus::Bus() : rom(nullptr), timer(nullptr), ppu(nullptr), ie_register(0), if_register(0)
+Bus::Bus() : rom(nullptr), timer(nullptr), ppu(nullptr), ie_register(0), if_register(0), test_mode(false)
 {
     init_memory_table();
+}
+
+Bus::Bus(bool test_mode_enable) : rom(nullptr), timer(nullptr), ppu(nullptr), ie_register(0), if_register(0), test_mode(test_mode_enable)
+{
+    // Blank
 }
 
 void Bus::init_memory_table()
@@ -31,6 +36,10 @@ void Bus::init_memory_table()
 
 uint8_t Bus::bus_read(uint16_t address)
 {
+    if (test_mode) 
+    {
+        return opcode_test_mem[address];
+    }
     for (const auto& region : memory_regions) {
         if (address >= region.start && address <= region.end) {
             return (this->*region.read_fn)(address);
@@ -41,6 +50,11 @@ uint8_t Bus::bus_read(uint16_t address)
 
 void Bus::bus_write(uint16_t address, uint8_t data)
 {
+    if (test_mode) 
+    {
+        opcode_test_mem[address] = data;
+        return;
+    }
     for (const auto& region : memory_regions) {
         if (address >= region.start && address <= region.end) {
             (this->*region.write_fn)(address, data);
@@ -137,6 +151,8 @@ uint8_t Bus::oam_read(uint16_t address)
     }
     return 0xFF;
 }
+
+
 
 void Bus::exram_write(uint16_t address, uint8_t value) //For External RAM
 {

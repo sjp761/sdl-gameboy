@@ -29,6 +29,7 @@ class Emu
         emu_context ctx;
         
         Emu();
+        Emu(bool test_mode_enable);
         
         // Accessors for components
         Rom& get_rom() { return rom; }
