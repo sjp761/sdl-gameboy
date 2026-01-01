@@ -22,31 +22,31 @@ find_package(jsoncpp REQUIRED)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 # Source files
-file(GLOB GAMEBOY_SRC "src/gameboy/*.cpp")
-file(GLOB GAMEBOY_CMP_SRC "src/gameboy/components/*.cpp")
-file(GLOB CPU_SRC "src/gameboy/components/cpu/*.cpp")
+file(GLOB GAMEBOY_SRC "emu/src/gameboy/*.cpp")
+file(GLOB GAMEBOY_CMP_SRC "emu/src/gameboy/*.cpp")
+file(GLOB CPU_SRC "emu/src/gameboy/cpu/*.cpp")
 
-set(GAMEBOY_INCLUDES src/gameboy src/sdl src/gameboy/components src/gameboy/components/cpu)
+set(GAMEBOY_INCLUDES emu/include/gameboy emu/include/gui emu/include/gameboy/ emu/include/gameboy/cpu)
 
 # Common SDL-Qt sources (excluding debug viewers)
 set(SDL_QT_COMMON_SOURCES
-    src/sdl/main.cpp
-    src/sdl/mainwindow.cpp
-    src/sdl/mainwindow.h
-    src/sdl/mainwindow.ui
-    src/sdl/SDLContainer.cpp
-    src/sdl/SDLContainer.h
-    src/sdl/SDLWidget.cpp
-    src/sdl/SDLWidget.h
-    src/sdl/SDL_SmartPointer.h
+    emu/src/gui/main.cpp
+    emu/src/gui/mainwindow.cpp
+    emu/include/gui/mainwindow.h
+    emu/src/gui/mainwindow.ui
+    emu/src/gui/SDLContainer.cpp
+    emu/include/gui/SDLContainer.h
+    emu/src/gui/SDLWidget.cpp
+    emu/include/gui/SDLWidget.h
+    emu/include/gui/SDL_SmartPointer.h
 )
 
 # Debug viewer sources
 set(DEBUG_VIEWER_SOURCES
-    src/sdl/SDL_TileViewer.cpp
-    src/sdl/SDL_TileViewer.h
-    src/sdl/SDL_TileMapViewer.cpp
-    src/sdl/SDL_TileMapViewer.h
+    emu/src/gui/SDL_TileViewer.cpp
+    emu/include/gui/SDL_TileViewer.h
+    emu/src/gui/SDL_TileMapViewer.cpp
+    emu/include/gui/SDL_TileMapViewer.h
 )
 
 # Function to create Qt executable
@@ -66,11 +66,9 @@ function(create_qt_executable TARGET_NAME SOURCES)
         Qt6::Widgets
         SDL3::SDL3
         SDL3_ttf::SDL3_ttf
-        JsonCpp::JsonCpp
     )
 
     target_include_directories(${TARGET_NAME} PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/sdl
         ${GAMEBOY_INCLUDES}
     )
 
