@@ -23,7 +23,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 # Source files
 file(GLOB GAMEBOY_SRC "emu/src/gameboy/*.cpp")
-file(GLOB GAMEBOY_CMP_SRC "emu/src/gameboy/*.cpp")
 file(GLOB CPU_SRC "emu/src/gameboy/cpu/*.cpp")
 
 set(GAMEBOY_INCLUDES emu/include/gameboy emu/include/gui emu/include/gameboy/ emu/include/gameboy/cpu)
@@ -58,7 +57,6 @@ function(create_qt_executable TARGET_NAME SOURCES)
 
     target_sources(${TARGET_NAME} PRIVATE
         ${GAMEBOY_SRC}
-        ${GAMEBOY_CMP_SRC}
         ${CPU_SRC}
     )
 
@@ -109,7 +107,6 @@ add_executable(opcode-test
 
 target_sources(opcode-test PRIVATE
     ${GAMEBOY_SRC}
-    ${GAMEBOY_CMP_SRC}
     ${CPU_SRC}
 )
 
