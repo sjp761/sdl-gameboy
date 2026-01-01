@@ -1,23 +1,11 @@
 #pragma once
 #include <cstdint>
 #include <mutex>
+#include "ppu_constants.h"
+
 class Bus;
 class Cpu;
 class LCD;
-constexpr int SCANLINES_PER_FRAME = 154;
-constexpr int VISIBLE_SCANLINES = 144;
-constexpr uint16_t DOTS_PER_SCANLINE = 456; //uint16_t to avoid overflow
-constexpr int OAM_SEARCH_DOTS = 80;
-constexpr int PIXEL_TRANSFER_DOTS = 172;
-constexpr int HBLANK_DOTS = 204;
-
-constexpr int TILE_MAP_WIDTH = 32;
-constexpr int TILE_MAP_HEIGHT = 32;
-constexpr int VRAM_SIZE = 0x2000; // 8KB
-constexpr int SCREEN_WIDTH = 160;
-constexpr int SCREEN_HEIGHT = 144;
-constexpr int SCREEN_BUFFER_SIZE = 160*144; // The display holds 360 tiles of 16 bytes each (160x144 pixels, 8 pixels per byte, 2 bytes per tile row)
-//Temporarily setting this to make things easier for me, will optimize later, original value is 360*16
 struct oam_entry
 {
     uint8_t y_pos;
@@ -63,12 +51,14 @@ public:
     const uint8_t* get_screen_buffer() const { return screen_front; }
     const uint8_t* get_vram_buffer() const { return reinterpret_cast<const uint8_t*>(vram_front); }
     const uint8_t* get_tilemap_buffer() const { return vram_front->tile_map_1; }
+
     
     // Swap buffers - call this once per frame from emulation thread
     void swap_buffers();
     
     // Get mutex for locking during VRAM access from rendering thread
     std::mutex& get_vram_mutex() { return vram_mutex; }
+    std::mutex& get_screen_mutex() { return screen_mutex; }
 
     // VRAM accessors (no mutex needed - writing to back buffer)
     uint8_t vram_read(uint16_t address);
@@ -85,12 +75,13 @@ private:
     vram_layout* vram_front = &vram_buffers[1]; // Rendering thread reads from here
     
     // Double-buffered screen buffer - using memcpy
-    uint8_t screen_buffers[2][SCREEN_BUFFER_SIZE] = {};
+    uint8_t screen_buffers[2][PpuConstants::SCREEN_BUFFER_SIZE] = {};
     uint8_t* screen_back = screen_buffers[0];  // Emulation thread writes here
     uint8_t* screen_front = screen_buffers[1]; // Rendering thread reads from here
     
     // Mutex for thread-safe VRAM access from rendering thread
     mutable std::mutex vram_mutex;
+    mutable std::mutex screen_mutex;
 
     scanline_state_t sst = {};
     void handle_oam_search();

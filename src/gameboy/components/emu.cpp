@@ -32,7 +32,7 @@ void Emu::set_component_pointers()
 {
   cpu.set_cmp(&bus, &timer, &dma, &ppu);
   bus.set_cmp(&rom, &timer, &ppu, &dma, &lcd);
-  timer.set_cmp(&cpu, &bus);
+  timer.set_cmp(&bus);
   ppu.set_cmp(&bus, &lcd, &cpu);
   dma.set_cmp(&bus);
   lcd.set_cmp(&ppu, &cpu);

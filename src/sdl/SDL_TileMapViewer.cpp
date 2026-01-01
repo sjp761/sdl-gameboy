@@ -26,10 +26,10 @@ SDL_TileMapViewer::~SDL_TileMapViewer()
 
 void SDL_TileMapViewer::init()
 {
-    int map_width = MAP_COLS * SCALED_TILE_SIZE;
-    int map_height = MAP_ROWS * SCALED_TILE_SIZE;
-    int window_width = map_width * 2 + BAR_WIDTH;  // Two maps plus separator bar
-    int window_height = map_height + HEADER_HEIGHT;  // Add space for header
+    int map_width = TileViewerConstants::MAP_COLS * TileViewerConstants::SCALED_TILE_SIZE;
+    int map_height = TileViewerConstants::MAP_ROWS * TileViewerConstants::SCALED_TILE_SIZE;
+    int window_width = map_width * 2 + TileViewerConstants::BAR_WIDTH;  // Two maps plus separator bar
+    int window_height = map_height + TileViewerConstants::HEADER_HEIGHT;  // Add space for header
     
     window = SDL_CreateWindow("Tile Map Viewer (0x9800 | 0x9C00)", window_width, window_height, SDL_WINDOW_RESIZABLE);
     if (!window) {
@@ -86,9 +86,9 @@ void SDL_TileMapViewer::update(const uint8_t* tilemap)
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White background
     SDL_RenderClear(renderer);
     
-    int map_width = MAP_COLS * SCALED_TILE_SIZE;
-    int map_height = MAP_ROWS * SCALED_TILE_SIZE;
-    int map_y_offset = HEADER_HEIGHT;
+    int map_width = TileViewerConstants::MAP_COLS * TileViewerConstants::SCALED_TILE_SIZE;
+    int map_height = TileViewerConstants::MAP_ROWS * TileViewerConstants::SCALED_TILE_SIZE;
+    int map_y_offset = TileViewerConstants::HEADER_HEIGHT;
     int bar_x = map_width;  // Bar position between maps
     
     // Render headers
@@ -112,7 +112,7 @@ void SDL_TileMapViewer::update(const uint8_t* tilemap)
         if (rightHeaderSurface) {
             SDL_Texture* rightHeaderTexture = SDL_CreateTextureFromSurface(renderer, rightHeaderSurface);
             if (rightHeaderTexture) {
-                SDL_FRect rightHeaderRect = {static_cast<float>(map_width + BAR_WIDTH + 10), 5.0f, (float)rightHeaderSurface->w, (float)rightHeaderSurface->h};
+                SDL_FRect rightHeaderRect = {static_cast<float>(map_width + TileViewerConstants::BAR_WIDTH + 10), 5.0f, (float)rightHeaderSurface->w, (float)rightHeaderSurface->h};
                 SDL_RenderTexture(renderer, rightHeaderTexture, nullptr, &rightHeaderRect);
                 SDL_DestroyTexture(rightHeaderTexture);
             }
@@ -123,24 +123,24 @@ void SDL_TileMapViewer::update(const uint8_t* tilemap)
     // Render separator bar
     SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);  // Gray bar
     SDL_FRect barRect = {static_cast<float>(bar_x), static_cast<float>(map_y_offset), 
-                         static_cast<float>(BAR_WIDTH), static_cast<float>(map_height)};
+                         static_cast<float>(TileViewerConstants::BAR_WIDTH), static_cast<float>(map_height)};
     SDL_RenderFillRect(renderer, &barRect);
     
     // Render both tile maps side by side
     // Left side: tile_map_1 (passed as tilemap)
     // Right side: tile_map_2 (tilemap + 0x400)
     for (int map_idx = 0; map_idx < 2; ++map_idx) {
-        int x_offset = (map_idx == 0) ? 0 : (map_width + BAR_WIDTH);
+        int x_offset = (map_idx == 0) ? 0 : (map_width + TileViewerConstants::BAR_WIDTH);
         const uint8_t* current_map = tilemap + (map_idx * 0x400);
         
-        for (int idx = 0; idx < MAP_SIZE; ++idx) {
-            int row = idx / MAP_COLS;
-            int col = idx % MAP_COLS;
-            int x = x_offset + col * SCALED_TILE_SIZE;
-            int y = map_y_offset + row * SCALED_TILE_SIZE;
+        for (int idx = 0; idx < TileViewerConstants::MAP_SIZE; ++idx) {
+            int row = idx / TileViewerConstants::MAP_COLS;
+            int col = idx % TileViewerConstants::MAP_COLS;
+            int x = x_offset + col * TileViewerConstants::SCALED_TILE_SIZE;
+            int y = map_y_offset + row * TileViewerConstants::SCALED_TILE_SIZE;
             
             SDL_FRect rect = { static_cast<float>(x), static_cast<float>(y), 
-                             static_cast<float>(SCALED_TILE_SIZE), static_cast<float>(SCALED_TILE_SIZE) };
+                             static_cast<float>(TileViewerConstants::SCALED_TILE_SIZE), static_cast<float>(TileViewerConstants::SCALED_TILE_SIZE) };
             
             // Background color
             SDL_SetRenderDrawColor(renderer, 80, 80, 160, 255);

@@ -7,12 +7,11 @@ class Timer
 {
     uint16_t div, old_div;
     uint8_t tima, tma, tac;
-    Cpu* cpu;
     Bus* bus;
     public:
         Timer();
         // Set component pointers
-        void set_cmp(Cpu* cpu_ptr, Bus* bus_ptr) { cpu = cpu_ptr; bus = bus_ptr; }
+        void set_cmp(Bus* bus_ptr) { bus = bus_ptr; }
         void tick();
         // MMIO accessors for timer registers
         // 0xFF04 DIV (read upper 8 bits), write resets

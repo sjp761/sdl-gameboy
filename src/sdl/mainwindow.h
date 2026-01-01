@@ -37,8 +37,8 @@ public:
     void fillRecentSet();
     void saveRecentSet();
     SDLWidget* getSDLWidget();
-    std::shared_ptr<Emu> emu_ref;
-    std::mutex emu_ref_mutex; // Protects emu_ref access
+    std::shared_ptr<Emu> emu_ref; // Current emulator instance
+    std::mutex emu_ref_mutex; // Protects emu_ref access during thread start/stop (gets assigned on different thread than the main one)
 #ifdef ENABLE_DEBUG_VIEWERS
     SDL_TileViewer tile_viewer;
     SDL_TileMapViewer tile_map_viewer;

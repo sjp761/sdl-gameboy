@@ -18,10 +18,13 @@ Ppu::Ppu() : bus(nullptr), lcd(nullptr), cpu(nullptr), dot(0)
 void Ppu::swap_buffers()
 {
     // Lock mutex to prevent rendering thread from reading during swap
-    std::lock_guard<std::mutex> lock(vram_mutex);
     // Copy both to front buffer (better than pointer swap because rendering thread may be mid-read on one buffer)
-    std::memcpy(screen_front, screen_back, SCREEN_BUFFER_SIZE);
-    std::memcpy(vram_front, vram_back, sizeof(vram_layout));
+    std::lock_guard<std::mutex> screen_lock(screen_mutex);
+    std::memcpy(screen_front, screen_back, PpuConstants::SCREEN_BUFFER_SIZE);
+    #ifdef ENABLE_DEBUG_VIEWERS
+        std::lock_guard<std::mutex> vram_lock(vram_mutex);
+        std::memcpy(vram_front, vram_back, sizeof(vram_layout));
+    #endif
 }
 
 void Ppu::set_cmp(Bus *bus_ptr, LCD* lcd_ptr, Cpu* cpu_ptr)
@@ -53,7 +56,7 @@ void Ppu::ppu_tick()
 
 void Ppu::handle_oam_search()
 {
-    if (dot >= OAM_SEARCH_DOTS)
+    if (dot >= PpuConstants::OAM_SEARCH_DOTS)
     {
         // Snapshot scroll and LY at the exact moment we enter pixel transfer
         sst.scy = lcd->regs.scroll_y;
@@ -68,18 +71,21 @@ void Ppu::handle_oam_search()
 
 void Ppu::handle_pixel_transfer() // We handle background drawing and window drawing here
 {
-    if (dot >= OAM_SEARCH_DOTS + PIXEL_TRANSFER_DOTS)
+    if (dot >= PpuConstants::OAM_SEARCH_DOTS + PpuConstants::PIXEL_TRANSFER_DOTS)
     {
         bool window_rendered_this_line = false;
         lcd->set_mode(LCD_Modes::HBLANK);
 
         for (int i = 0; i < 160; i++)
         {
-            set_pixel(i, sst.ly, sst.scx, sst.scy, false); // Render background pixel
             if (sst.wy <= sst.ly && i >= (static_cast<int>(sst.wx) - 7) && lcd->get_lcd_control_attr(lcd_control_bits::WINDOW_DISPLAY_ENABLE))
             {
                 set_pixel(i, sst.window_line_counter, -(sst.wx - 7), 0, true); // Render window pixel
                 window_rendered_this_line = true;
+            }
+            else
+            {
+                set_pixel(i, sst.ly, sst.scx, sst.scy, false); // Render background pixel
             }
             
         }
@@ -92,11 +98,11 @@ void Ppu::handle_pixel_transfer() // We handle background drawing and window dra
 
 void Ppu::handle_hblank()
 {
-    if (static_cast<uint16_t>(dot) >= DOTS_PER_SCANLINE)
+    if (static_cast<uint16_t>(dot) >= PpuConstants::DOTS_PER_SCANLINE)
     {
         dot = 0;
         lcd->bump_ly();     
-        if (lcd->regs.lcd_y >= VISIBLE_SCANLINES)
+        if (lcd->regs.lcd_y >= PpuConstants::VISIBLE_SCANLINES)
         {
             lcd->set_mode(LCD_Modes::VBLANK);
             cpu->request_interrupt(Interrupts::InterruptMask::IT_VBlank);
@@ -110,11 +116,11 @@ void Ppu::handle_hblank()
 
 void Ppu::handle_vblank()
 {
-    if (static_cast<uint16_t>(dot) >= DOTS_PER_SCANLINE)
+    if (static_cast<uint16_t>(dot) >= PpuConstants::DOTS_PER_SCANLINE)
     {
         dot = 0;
         lcd->bump_ly();        
-        if (lcd->regs.lcd_y >= SCANLINES_PER_FRAME)
+        if (lcd->regs.lcd_y >= PpuConstants::SCANLINES_PER_FRAME)
         {
             sst.window_line_counter = 0; // Reset window line counter at the start of a new frame
             lcd->regs.lcd_y = 0;
@@ -131,7 +137,7 @@ void Ppu::set_pixel(int x, int y, int offx, int offy, bool is_window) //When it 
     if (!sst.background_enabled)
     {
         if (!is_window)
-            screen_back[ly * SCREEN_WIDTH + x] = 0; // Write the color ID to the screen buffer
+            screen_back[ly * PpuConstants::SCREEN_WIDTH + x] = 0; // Write the color ID to the screen buffer
         return;
     }
     uint16_t tile_map_base_addr;
@@ -144,7 +150,7 @@ void Ppu::set_pixel(int x, int y, int offx, int offy, bool is_window) //When it 
     uint8_t* tile_map_base_ptr = vram_base_ptr + (tile_map_base_addr - 0x8000); // Pointer to the start of the selected tile map
     uint8_t tile_row = ((y + offy) & 255) / 8; // Making the assumption that window Y does not affect which tile row is drawn (window y register determines starting position on screen, not in tile map);
     uint8_t tile_col = ((x + offx) & 255) / 8; // Window X position is offset by 7 pixels
-    uint8_t tile_index = tile_map_base_ptr[tile_row * TILE_MAP_WIDTH + tile_col]; // Get the tile index from the tile map
+    uint8_t tile_index = tile_map_base_ptr[tile_row * PpuConstants::TILE_MAP_WIDTH + tile_col]; // Get the tile index from the tile map
     uint16_t tile_data_addr;
     if (tile_data_base_addr == 0x8000)
         tile_data_addr = 0x8000 + (tile_index * 16); // Each tile is 16 bytes, tile indices always range from 0-255
@@ -158,7 +164,7 @@ void Ppu::set_pixel(int x, int y, int offx, int offy, bool is_window) //When it 
     uint8_t color_bit0 = (byte1 >> bit_index) & 0x01; // Get the bit for color 0
     uint8_t color_bit1 = (byte2 >> bit_index) & 0x01; // Get the bit for color 1
     uint8_t color_id = (color_bit1 << 1) | color_bit0;
-    screen_back[ly * SCREEN_WIDTH + x] = color_id; // Write the color ID to the screen buffer
+    screen_back[ly * PpuConstants::SCREEN_WIDTH + x] = color_id; // Write the color ID to the screen buffer
 }
 
 uint8_t Ppu::vram_read(uint16_t address)

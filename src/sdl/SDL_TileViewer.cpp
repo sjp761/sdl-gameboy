@@ -29,8 +29,8 @@ void SDL_TileViewer::init()
     }
     
     // Calculate window dimensions for 24x16 tile grid with number display
-    int window_width = TILES_PER_ROW * BOX_WIDTH;
-    int window_height = TILES_PER_COL * SCALED_TILE_SIZE;
+    int window_width = TileViewerConstants::TILES_PER_ROW * TileViewerConstants::BOX_WIDTH;
+    int window_height = TileViewerConstants::TILES_PER_COL * TileViewerConstants::SCALED_TILE_SIZE;
     
     window = SDL_CreateWindow("VRAM Tile Viewer (384 Tiles)", 
                               window_width, 
@@ -55,8 +55,8 @@ void SDL_TileViewer::init()
     tile_texture.reset(SDL_CreateTexture(renderer, 
                                         SDL_PIXELFORMAT_RGBA8888,
                                         SDL_TEXTUREACCESS_STREAMING,
-                                        TILE_SIZE, 
-                                        TILE_SIZE));
+                                        TileViewerConstants::TILE_SIZE, 
+                                        TileViewerConstants::TILE_SIZE));
 }
 
 void SDL_TileViewer::cleanup()
@@ -95,7 +95,7 @@ uint32_t SDL_TileViewer::get_color(uint8_t pixel_value)
 
 void SDL_TileViewer::render_tile(const uint8_t* vram, int tile_index, int x, int y)
 {
-    if (!tile_texture.get() || !vram || tile_index >= TOTAL_TILES) return;
+    if (!tile_texture.get() || !vram || tile_index >= TileViewerConstants::TOTAL_TILES) return;
     
     // Each tile is 16 bytes (8x8 pixels, 2 bits per pixel)
     uint16_t tile_address = tile_index * 16;
@@ -110,16 +110,16 @@ void SDL_TileViewer::render_tile(const uint8_t* vram, int tile_index, int x, int
     uint32_t* pixels = static_cast<uint32_t*>(pixels_raw);
     
     // Decode tile data
-    for (int row = 0; row < TILE_SIZE; row++) 
+    for (int row = 0; row < TileViewerConstants::TILE_SIZE; row++) 
     {
         uint8_t byte1 = vram[tile_address + (row * 2)]; //Each pixel is represented by 2 bits across 2 bytes
         uint8_t byte2 = vram[tile_address + (row * 2) + 1];
         
-        for (int col = 0; col < TILE_SIZE; col++)
+        for (int col = 0; col < TileViewerConstants::TILE_SIZE; col++)
         { // Process each pixel in the row
             int bit = 7 - col; // The left most bit is for the left pixel, shift it to get the color info
             uint8_t pixel_value = ((byte1 >> bit) & 1) | (((byte2 >> bit) & 1) << 1); //Each pixel is 2 bits for the color, the bits are swapped when determining the color so OR them to get the final value
-            pixels[row * TILE_SIZE + col] = get_color(pixel_value); 
+            pixels[row * TileViewerConstants::TILE_SIZE + col] = get_color(pixel_value); 
         }
     }
     
@@ -127,10 +127,10 @@ void SDL_TileViewer::render_tile(const uint8_t* vram, int tile_index, int x, int
     
     // Render tile sprite on the right side
     SDL_FRect tile_dest_rect = {
-        static_cast<float>(x + NUMBER_WIDTH),
+        static_cast<float>(x + TileViewerConstants::NUMBER_WIDTH),
         static_cast<float>(y),
-        static_cast<float>(SCALED_TILE_SIZE),
-        static_cast<float>(SCALED_TILE_SIZE)
+        static_cast<float>(TileViewerConstants::SCALED_TILE_SIZE),
+        static_cast<float>(TileViewerConstants::SCALED_TILE_SIZE)
     };
     SDL_RenderTexture(renderer, tile_texture.get(), nullptr, &tile_dest_rect);
     
@@ -155,8 +155,8 @@ void SDL_TileViewer::render_tile(const uint8_t* vram, int tile_index, int x, int
                 
                 // Center text vertically and position it on the left side
                 SDL_FRect text_rect = {
-                    static_cast<float>(x + (NUMBER_WIDTH - text_width) / 2),
-                    static_cast<float>(y + (SCALED_TILE_SIZE - text_height) / 2),
+                    static_cast<float>(x + (TileViewerConstants::NUMBER_WIDTH - text_width) / 2),
+                    static_cast<float>(y + (TileViewerConstants::SCALED_TILE_SIZE - text_height) / 2),
                     static_cast<float>(text_width),
                     static_cast<float>(text_height)
                 };
@@ -179,12 +179,12 @@ void SDL_TileViewer::update(const uint8_t* vram)
     SDL_RenderClear(renderer);
     
     // Render all 384 tiles in a 24x16 grid
-    for (int tile_idx = 0; tile_idx < TOTAL_TILES; tile_idx++) {
-        int row = tile_idx / TILES_PER_ROW;
-        int col = tile_idx % TILES_PER_ROW;
+    for (int tile_idx = 0; tile_idx < TileViewerConstants::TOTAL_TILES; tile_idx++) {
+        int row = tile_idx / TileViewerConstants::TILES_PER_ROW;
+        int col = tile_idx % TileViewerConstants::TILES_PER_ROW;
         
-        int x = col * BOX_WIDTH;
-        int y = row * SCALED_TILE_SIZE;
+        int x = col * TileViewerConstants::BOX_WIDTH;
+        int y = row * TileViewerConstants::SCALED_TILE_SIZE;
         
         render_tile(vram, tile_idx, x, y);
     }

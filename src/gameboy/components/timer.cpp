@@ -1,6 +1,6 @@
 #include "timer.h"
 
-Timer::Timer() : div(0xAC00), tima(0), tma(0), tac(0), cpu(nullptr), bus(nullptr)
+Timer::Timer() : div(0xAC00), tima(0), tma(0), tac(0), bus(nullptr)
 {
 }
 

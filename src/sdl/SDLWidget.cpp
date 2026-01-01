@@ -45,9 +45,6 @@ void SDLWidget::renderFrame()
         sdlcon.render(emu->get_ppu().get_screen_buffer());
 
 #ifdef ENABLE_DEBUG_VIEWERS
-        // Lock VRAM mutex while accessing buffers for debug viewers
-        std::lock_guard<std::mutex> lock(emu->get_ppu().get_vram_mutex());
-        
         // Update tile viewer if active
         if (tile_viewer_ptr) {
             if (tile_viewer_ptr->is_open()) {
