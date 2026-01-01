@@ -65,6 +65,20 @@ void Ppu::handle_oam_search()
         sst.wx = lcd->regs.window_x;
         sst.wy = lcd->regs.window_y;
         sst.background_enabled = lcd->get_lcd_control_attr(lcd_control_bits::BG_DISPLAY);
+        sst.objs_enabled = lcd->get_lcd_control_attr(lcd_control_bits::OBJ_DISPLAY_ENABLE); //Can be toggled mid scanline but we will test it here for now
+        sst.obj_size = lcd->get_lcd_control_attr(lcd_control_bits::OBJ_SIZE);
+        sst.overlap_sprite_indices.clear();
+        for (int i = 0; i < 40; i++)
+        {
+            int16_t sprite_y = static_cast<int16_t>(oam[i].y_pos) - 16; //Sprite Y position is offset by 16
+            uint8_t sprite_height = sst.obj_size ? 16 : 8;
+            if (sst.ly >= sprite_y && sst.ly < (sprite_y + sprite_height))
+            {
+                sst.overlap_sprite_indices.push_back(i);
+                if (sst.overlap_sprite_indices.size() >= 10) //Max 10 sprites per scanline
+                    break;
+            }
+        }
         lcd->set_mode(LCD_Modes::PIXEL_TRANSFER);
     }
 }
@@ -87,8 +101,9 @@ void Ppu::handle_pixel_transfer() // We handle background drawing and window dra
             {
                 set_pixel(i, sst.ly, sst.scx, sst.scy, false); // Render background pixel
             }
-            
         }
+        if (sst.objs_enabled)
+            oam_render_scanline(); // Render sprites on top of background/window
         if (window_rendered_this_line)
         {
             sst.window_line_counter++;
@@ -111,6 +126,7 @@ void Ppu::handle_hblank()
         {
             lcd->set_mode(LCD_Modes::OAM_SEARCH);
         }
+        sst.overlap_sprite_indices.clear(); //Clear sprite indices for next scanline
     }
 }
 
@@ -165,6 +181,35 @@ void Ppu::set_pixel(int x, int y, int offx, int offy, bool is_window) //When it 
     uint8_t color_bit1 = (byte2 >> bit_index) & 0x01; // Get the bit for color 1
     uint8_t color_id = (color_bit1 << 1) | color_bit0;
     screen_back[ly * PpuConstants::SCREEN_WIDTH + x] = color_id; // Write the color ID to the screen buffer
+}
+
+void Ppu::oam_render_scanline()
+{
+    for (int sprite_idx : sst.overlap_sprite_indices)
+    {
+        const oam_entry& sprite = oam[sprite_idx];
+        int16_t sprite_y = static_cast<int16_t>(sprite.y_pos) - 16; //Sprite Y position is offset by 16
+        int16_t sprite_x = static_cast<int16_t>(sprite.x_pos) - 8;  //Sprite X position is offset by 8
+        uint8_t sprite_height = sst.obj_size ? 16 : 8;
+        uint8_t line_within_sprite = sst.ly - sprite_y;
+        uint8_t tile_index = sprite.tile_index;
+        uint8_t* vram_base_ptr = reinterpret_cast<uint8_t*>(vram_back); // Base pointer to VRAM back buffer, OBJs use 0x8000 addressing mode only, all tiles reside in order, 8x16 uses two consecutive tiles
+        uint8_t* tile_base_ptr = vram_base_ptr + tile_index * 16; // Pointer to the start of the tile data for this sprite
+        uint8_t byte1 = tile_base_ptr[(line_within_sprite % 8) * 2];     // Each line is 2 bytes so multiply by 2
+        uint8_t byte2 = tile_base_ptr[(line_within_sprite % 8) * 2 + 1]; // Second byte
+        for (int pixel = 7; pixel >= 0; pixel--)
+        {
+            int screen_x = sprite_x + (7 - pixel); // Calculate screen X position
+            if (screen_x < 0 || screen_x >= PpuConstants::SCREEN_WIDTH)
+                continue; // Skip pixels outside the screen
+            uint8_t color_bit0 = (byte1 >> pixel) & 0x01; // Get the bit for color 0
+            uint8_t color_bit1 = (byte2 >> pixel) & 0x01; // Get the bit for color 1
+            uint8_t color_id = (color_bit1 << 1) | color_bit0;
+            if (color_id == 0)
+                continue; // Color ID 0 is transparent for sprites
+            screen_back[sst.ly * PpuConstants::SCREEN_WIDTH + screen_x] = color_id; // Write the color ID to the screen buffer
+        }
+    }
 }
 
 uint8_t Ppu::vram_read(uint16_t address)

@@ -1,17 +1,27 @@
 #pragma once
 #include <cstdint>
 #include <mutex>
+#include <vector>
 #include "ppu_constants.h"
 
 class Bus;
 class Cpu;
 class LCD;
+
+
 struct oam_entry
 {
     uint8_t y_pos;
     uint8_t x_pos;
     uint8_t tile_index;
-    uint8_t attributes;
+    struct attributes
+    {
+        uint8_t priority : 1;      // Bit 7
+        uint8_t y_flip : 1;       // Bit 6
+        uint8_t x_flip : 1;       // Bit 5
+        uint8_t palette_number : 1; // Bit 4
+        uint8_t unused : 4;       // Bits 3-0
+    } attr;
 };
 
 // VRAM layout struct - named sections for organized access
@@ -32,7 +42,10 @@ struct scanline_state_t
     uint8_t wx;
     uint8_t wy;
     uint8_t window_line_counter; //Counts which line of the window is being drawn
+    std::vector<int> overlap_sprite_indices; 
     bool background_enabled; //Based on LCDC bit 0
+    bool objs_enabled;       //Based on LCDC bit 1
+    bool obj_size;          //Based on LCDC bit 2, false = 8x8, true = 8x16
 };
 
 class Ppu
@@ -89,4 +102,5 @@ private:
     void handle_hblank();
     void handle_vblank();
     void set_pixel(int x, int y, int offx, int offy, bool is_window);
+    void oam_render_scanline();
 };
