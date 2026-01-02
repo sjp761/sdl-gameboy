@@ -188,22 +188,31 @@ void Ppu::oam_render_scanline()
     for (int sprite_idx : sst.overlap_sprite_indices)
     {
         const oam_entry& sprite = oam[sprite_idx];
-        int16_t sprite_y = static_cast<int16_t>(sprite.y_pos) - 16; //Sprite Y position is offset by 16
-        int16_t sprite_x = static_cast<int16_t>(sprite.x_pos) - 8;  //Sprite X position is offset by 8
+        int16_t sprite_y = static_cast<int16_t>(sprite.y_pos) - 16; // Sprite Y position is offset by 16
+        int16_t sprite_x = static_cast<int16_t>(sprite.x_pos) - 8;  // Sprite X position is offset by 8
         uint8_t sprite_height = sst.obj_size ? 16 : 8;
         uint8_t line_within_sprite = sst.ly - sprite_y;
+        if (sprite.attr.y_flip)
+            line_within_sprite = (sprite_height - 1) - line_within_sprite; // Flip vertically if needed, get maximum line index then subtract current line to "flip" the number
         uint8_t tile_index = sprite.tile_index;
+        if (sst.obj_size)
+        {
+            tile_index &= 0xFE; // 8x16 sprites always start on an even-numbered tile (ignore bit 0)
+            if (line_within_sprite >= 8)
+                tile_index += 1; // Bottom half uses the following tile in the pair
+        }
         uint8_t* vram_base_ptr = reinterpret_cast<uint8_t*>(vram_back); // Base pointer to VRAM back buffer, OBJs use 0x8000 addressing mode only, all tiles reside in order, 8x16 uses two consecutive tiles
         uint8_t* tile_base_ptr = vram_base_ptr + tile_index * 16; // Pointer to the start of the tile data for this sprite
-        uint8_t byte1 = tile_base_ptr[(line_within_sprite % 8) * 2];     // Each line is 2 bytes so multiply by 2
-        uint8_t byte2 = tile_base_ptr[(line_within_sprite % 8) * 2 + 1]; // Second byte
-        for (int pixel = 7; pixel >= 0; pixel--)
+        uint8_t byte1 = tile_base_ptr[(line_within_sprite & 7) * 2];     // Each line is 2 bytes so multiply by 2
+        uint8_t byte2 = tile_base_ptr[(line_within_sprite & 7) * 2 + 1]; // Second byte
+        for (int bit = 7; bit >= 0; bit--)
         {
-            int screen_x = sprite_x + (7 - pixel); // Calculate screen X position
+            int screen_x_offset = sprite.attr.x_flip ? bit : (7 - bit);
+            int screen_x = sprite_x + screen_x_offset; // Calculate screen X position
             if (screen_x < 0 || screen_x >= PpuConstants::SCREEN_WIDTH)
                 continue; // Skip pixels outside the screen
-            uint8_t color_bit0 = (byte1 >> pixel) & 0x01; // Get the bit for color 0
-            uint8_t color_bit1 = (byte2 >> pixel) & 0x01; // Get the bit for color 1
+            uint8_t color_bit0 = (byte1 >> bit) & 0x01; // Get the bit for color 0
+            uint8_t color_bit1 = (byte2 >> bit) & 0x01; // Get the bit for color 1
             uint8_t color_id = (color_bit1 << 1) | color_bit0;
             if (color_id == 0)
                 continue; // Color ID 0 is transparent for sprites

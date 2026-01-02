@@ -16,11 +16,11 @@ struct oam_entry
     uint8_t tile_index;
     struct attributes
     {
-        uint8_t priority : 1;      // Bit 7
-        uint8_t y_flip : 1;       // Bit 6
-        uint8_t x_flip : 1;       // Bit 5
+        uint8_t unused : 4;       // Bits 0-3
         uint8_t palette_number : 1; // Bit 4
-        uint8_t unused : 4;       // Bits 3-0
+        uint8_t x_flip : 1;       // Bit 5
+        uint8_t y_flip : 1;       // Bit 6
+        uint8_t priority : 1;      // Bit 7
     } attr;
 };
 
