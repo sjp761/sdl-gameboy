@@ -92,6 +92,8 @@ private:
     uint8_t* screen_back = screen_buffers[0];  // Emulation thread writes here
     uint8_t* screen_front = screen_buffers[1]; // Rendering thread reads from here
     
+    uint8_t bgwin_color_ids[PpuConstants::SCREEN_BUFFER_SIZE] = {}; // Using this to track raw BG color IDs for sprite priority handling, 
+
     // Mutex for thread-safe VRAM access from rendering thread
     mutable std::mutex vram_mutex;
     mutable std::mutex screen_mutex;

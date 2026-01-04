@@ -3,6 +3,39 @@
 #include "ppu.h"
 #include <unordered_map>
 
+struct pallette_data 
+{
+    uint8_t color_0 : 2; // Bits 0-1
+    uint8_t color_1 : 2; // Bits 2-3
+    uint8_t color_2 : 2; // Bits 4-5
+    uint8_t color_3 : 2; // Bits 6-7
+
+    uint8_t get_color(uint8_t index) const 
+    {
+        switch(index)
+        {
+            case 0: return color_0;
+            case 1: return color_1;
+            case 2: return color_2;
+            case 3: return color_3;
+            default: return 0; // Invalid index
+        }
+    }
+
+    pallette_data(uint8_t value = 0) // Allows implicit conversion from uint8_t
+    {
+        color_0 = value & 0b00000011;
+        color_1 = (value >> 2) & 0b00000011;
+        color_2 = (value >> 4) & 0b00000011;
+        color_3 = (value >> 6) & 0b00000011;
+    }
+
+    operator uint8_t() const // User defined conversion to uint8_t
+    {
+        return (color_0) | (color_1 << 2) | (color_2 << 4) | (color_3 << 6);
+    }
+};
+
 // LCD Control Register (FF40) bit-field struct
 struct lcd_control_register
 {
@@ -71,9 +104,9 @@ struct lcd_registers
     uint8_t lcd_y;       //FF44
     uint8_t lcd_y_compare; //FF45
     //FF46 is DMA transfer register, handled directly in bus
-    uint8_t bg_palette;  //FF47
-    uint8_t obj_palette_0; //FF48
-    uint8_t obj_palette_1; //FF49
+    pallette_data bg_palette;  //FF47
+    pallette_data obj_palette_0; //FF48
+    pallette_data obj_palette_1; //FF49
     uint8_t window_y;    //FF4A
     uint8_t window_x;    //FF4B
     
@@ -102,14 +135,6 @@ inline void byte_to_lcd_status(lcd_status_register& status, uint8_t value)
     *reinterpret_cast<uint8_t*>(&status) = value;
     status.mode_flag = mode;
 }
-
-enum class LCD_Colors : uint8_t
-{
-    WHITE = 0b00,
-    LIGHT_GRAY = 0b01,
-    DARK_GRAY = 0b10,
-    BLACK = 0b11
-};
 
 enum class LCD_Modes : uint8_t //For bits 0-1 of LCD Status register
 {

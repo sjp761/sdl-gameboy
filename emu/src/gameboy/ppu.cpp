@@ -153,7 +153,10 @@ void Ppu::set_pixel(int x, int y, int offx, int offy, bool is_window) //When it 
     if (!sst.background_enabled)
     {
         if (!is_window)
-            screen_back[ly * PpuConstants::SCREEN_WIDTH + x] = 0; // Write the color ID to the screen buffer
+        {
+            bgwin_color_ids[ly * PpuConstants::SCREEN_WIDTH + x] = 0; // Update the bg color ID tracking array for priority handling
+            screen_back[ly * PpuConstants::SCREEN_WIDTH + x] = lcd->regs.bg_palette.get_color(0); // Write the color ID to the screen buffer
+        }
         return;
     }
     uint16_t tile_map_base_addr;
@@ -164,8 +167,8 @@ void Ppu::set_pixel(int x, int y, int offx, int offy, bool is_window) //When it 
     uint16_t tile_data_base_addr = lcd->get_lcd_control_attr(lcd_control_bits::BG_WINDOW_TILE_DATA_SELECT) ? 0x8000 : 0x9000; // Bit 4 determines adressing mode, 8000 or 9000 is the base addr, 8000 uses unsigned math while 9000 uses signed math
     uint8_t* vram_base_ptr = reinterpret_cast<uint8_t*>(vram_back); // Base pointer to VRAM back buffer
     uint8_t* tile_map_base_ptr = vram_base_ptr + (tile_map_base_addr - 0x8000); // Pointer to the start of the selected tile map
-    uint8_t tile_row = ((y + offy) & 255) / 8; // Making the assumption that window Y does not affect which tile row is drawn (window y register determines starting position on screen, not in tile map);
-    uint8_t tile_col = ((x + offx) & 255) / 8; // Window X position is offset by 7 pixels
+    uint8_t tile_row = ((y + offy) & 255) / 8; 
+    uint8_t tile_col = ((x + offx) & 255) / 8; 
     uint8_t tile_index = tile_map_base_ptr[tile_row * PpuConstants::TILE_MAP_WIDTH + tile_col]; // Get the tile index from the tile map
     uint16_t tile_data_addr;
     if (tile_data_base_addr == 0x8000)
@@ -180,7 +183,8 @@ void Ppu::set_pixel(int x, int y, int offx, int offy, bool is_window) //When it 
     uint8_t color_bit0 = (byte1 >> bit_index) & 0x01; // Get the bit for color 0
     uint8_t color_bit1 = (byte2 >> bit_index) & 0x01; // Get the bit for color 1
     uint8_t color_id = (color_bit1 << 1) | color_bit0;
-    screen_back[ly * PpuConstants::SCREEN_WIDTH + x] = color_id; // Write the color ID to the screen buffer
+    bgwin_color_ids[ly * PpuConstants::SCREEN_WIDTH + x] = color_id; // Update the bg color ID tracking array for priority handling
+    screen_back[ly * PpuConstants::SCREEN_WIDTH + x] = lcd->regs.bg_palette.get_color(color_id); // Write the color ID to the screen buffer
 }
 
 void Ppu::oam_render_scanline()
@@ -216,7 +220,10 @@ void Ppu::oam_render_scanline()
             uint8_t color_id = (color_bit1 << 1) | color_bit0;
             if (color_id == 0)
                 continue; // Color ID 0 is transparent for sprites
-            screen_back[sst.ly * PpuConstants::SCREEN_WIDTH + screen_x] = color_id; // Write the color ID to the screen buffer
+            if (sprite.attr.priority && bgwin_color_ids[sst.ly * PpuConstants::SCREEN_WIDTH + screen_x] != 0) 
+                continue; // Skip drawing this pixel due to priority, if priority bit is set, color ID 1-3 of BG/WIN have priority over sprite
+            pallette_data& obj_palette = sprite.attr.palette_number ? lcd->regs.obj_palette_1 : lcd->regs.obj_palette_0;
+            screen_back[sst.ly * PpuConstants::SCREEN_WIDTH + screen_x] = obj_palette.get_color(color_id); // Write the color ID to the screen buffer
         }
     }
 }
