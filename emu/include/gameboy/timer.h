@@ -18,6 +18,6 @@ class Timer
         // 0xFF05 TIMA
         // 0xFF06 TMA
         // 0xFF07 TAC
-        uint8_t read(uint16_t address);
+        uint8_t read(uint16_t address) const;
         void write(uint16_t address, uint8_t value);
 };

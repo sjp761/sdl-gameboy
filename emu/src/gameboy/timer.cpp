@@ -4,7 +4,7 @@ Timer::Timer() : div(0xAC00), tima(0), tma(0), tac(0), bus(nullptr)
 {
 }
 
-uint8_t Timer::read(uint16_t address)
+uint8_t Timer::read(uint16_t address) const
 {
     switch (address) {
         case 0xFF04: // DIV

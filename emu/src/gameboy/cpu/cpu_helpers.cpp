@@ -144,19 +144,19 @@ int8_t Cpu::read_imm_signed8() {
 
 // ===== Flag Manipulation Helpers =====
 void Cpu::set_flag_z(bool value) {
-    regs.f = value ? (regs.f | 0x80) : (regs.f & ~0x80);
-}
+    regs.f = (regs.f & ~static_cast<uint8_t>(alu_flags::Z)) | ((uint8_t)value << 7); // Unset the value then set it based on input,
+} 
 
 void Cpu::set_flag_n(bool value) {
-    regs.f = value ? (regs.f | 0x40) : (regs.f & ~0x40);
+    regs.f = (regs.f & ~static_cast<uint8_t>(alu_flags::N)) | ((uint8_t)value << 6);
 }
 
 void Cpu::set_flag_h(bool value) {
-    regs.f = value ? (regs.f | 0x20) : (regs.f & ~0x20);
+    regs.f = (regs.f & ~static_cast<uint8_t>(alu_flags::H)) | ((uint8_t)value << 5);
 }
 
 void Cpu::set_flag_c(bool value) {
-    regs.f = value ? (regs.f | 0x10) : (regs.f & ~0x10);
+    regs.f = (regs.f & ~static_cast<uint8_t>(alu_flags::C)) | ((uint8_t)value << 4);
 }
 
 bool Cpu::get_flag_z() const {

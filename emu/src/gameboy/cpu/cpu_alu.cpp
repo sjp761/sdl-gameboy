@@ -17,7 +17,7 @@ void Cpu::execute_alu_op(AluOp op, uint8_t operand) {
             break;
             
         case AluOp::ADC:
-            carry_in = get_flag_c() ? 1 : 0;
+            carry_in = (get_flag_c() & 1);
             result = regs.a + operand + carry_in;
             set_flag_z((result & 0xFF) == 0);
             set_flag_n(false);
@@ -36,7 +36,7 @@ void Cpu::execute_alu_op(AluOp op, uint8_t operand) {
             break;
             
         case AluOp::SBC:
-            carry_in = get_flag_c() ? 1 : 0;
+            carry_in = (get_flag_c() & 1);
             result = regs.a - operand - carry_in;
             set_flag_z((result & 0xFF) == 0);
             set_flag_n(true);
@@ -105,7 +105,7 @@ void Cpu::execute_acc_flag_op(AccFlagOp op) {
             
         case AccFlagOp::RLA: // Rotate left through carry
             carry = (regs.a & 0x80) >> 7;
-            regs.a = (regs.a << 1) | (get_flag_c() ? 1 : 0);
+            regs.a = (regs.a << 1) | (get_flag_c() & 1);
             set_flag_z(false);
             set_flag_n(false);
             set_flag_h(false);
@@ -114,7 +114,7 @@ void Cpu::execute_acc_flag_op(AccFlagOp op) {
             
         case AccFlagOp::RRA: // Rotate right through carry
             carry = regs.a & 0x01;
-            regs.a = (regs.a >> 1) | (get_flag_c() ? 0x80 : 0);
+            regs.a = (regs.a >> 1) | ((get_flag_c() & 1) << 7);
             set_flag_z(false);
             set_flag_n(false);
             set_flag_h(false);
@@ -189,7 +189,7 @@ void Cpu::execute_shift_rotate_op(ShiftRotateOp op, R8 reg) {
             
         case ShiftRotateOp::RL: // Rotate left through carry
             carry = (value & 0x80) >> 7;
-            value = (value << 1) | (get_flag_c() ? 1 : 0);
+            value = (value << 1) | (get_flag_c() & 1);
             set_flag_z(value == 0);
             set_flag_n(false);
             set_flag_h(false);
@@ -198,7 +198,7 @@ void Cpu::execute_shift_rotate_op(ShiftRotateOp op, R8 reg) {
             
         case ShiftRotateOp::RR: // Rotate right through carry
             carry = value & 0x01;
-            value = (value >> 1) | (get_flag_c() ? 0x80 : 0);
+            value = (value >> 1) | ((get_flag_c() & 1) << 7);
             set_flag_z(value == 0);
             set_flag_n(false);
             set_flag_h(false);

@@ -18,7 +18,7 @@ class DMA
         }
         void start(uint8_t value);
         void tick();
-        bool is_active();
+        bool is_active() const;
     private:
         Bus* bus;
         dma_ctx ctx;

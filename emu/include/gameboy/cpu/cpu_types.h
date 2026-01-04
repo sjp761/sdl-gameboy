@@ -37,3 +37,11 @@ enum class ShiftRotateOp : uint8_t {
     RLC = 0, RRC = 1, RL = 2, RR = 3,
     SLA = 4, SRA = 5, SWAP = 6, SRL = 7
 };
+
+enum class alu_flags : uint8_t {
+    NONE = 0,
+    Z = 1 << 7, // Zero flag
+    N = 1 << 6, // Subtract flag
+    H = 1 << 5, // Half-carry flag
+    C = 1 << 4  // Carry flag
+};

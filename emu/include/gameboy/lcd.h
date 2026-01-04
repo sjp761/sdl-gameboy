@@ -10,16 +10,11 @@ struct pallette_data
     uint8_t color_2 : 2; // Bits 4-5
     uint8_t color_3 : 2; // Bits 6-7
 
-    uint8_t get_color(uint8_t index) const 
+    inline uint8_t get_color(uint8_t index) const 
     {
-        switch(index)
-        {
-            case 0: return color_0;
-            case 1: return color_1;
-            case 2: return color_2;
-            case 3: return color_3;
-            default: return 0; // Invalid index
-        }
+        // Branchless: shift by (index * 2) to get the right 2-bit pair
+        const uint8_t byte = static_cast<uint8_t>(*this);
+        return (byte >> (index << 1)) & 0x03;
     }
 
     pallette_data(uint8_t value = 0) // Allows implicit conversion from uint8_t
@@ -153,11 +148,11 @@ class LCD
         Cpu* cpu;
         void set_cmp(Ppu* ppu_ptr, Cpu* cpu_ptr);
         void lcd_write(uint16_t addr, uint8_t value);
-        uint8_t lcd_read(uint16_t addr);
+        uint8_t lcd_read(uint16_t addr) const;
         void bump_ly();
         void set_mode(LCD_Modes mode);
-        uint8_t get_lcd_control_attr(lcd_control_bits bit);
-        uint8_t get_lcd_status_attr(lcd_status_bits bit);
+        uint8_t get_lcd_control_attr(lcd_control_bits bit) const;
+        uint8_t get_lcd_status_attr(lcd_status_bits bit) const;
         void check_lyc();
 
 };

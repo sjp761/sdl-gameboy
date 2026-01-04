@@ -84,11 +84,11 @@ public:
     std::mutex& get_screen_mutex() { return screen_mutex; }
 
     // VRAM accessors (no mutex needed - writing to back buffer)
-    uint8_t vram_read(uint16_t address);
+    uint8_t vram_read(uint16_t address) const;
     void vram_write(uint16_t address, uint8_t value);
 
     // OAM accessors
-    uint8_t oam_read(uint16_t address);
+    uint8_t oam_read(uint16_t address) const;
     void oam_write(uint16_t address, uint8_t value);
 
 private:

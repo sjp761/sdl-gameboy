@@ -28,7 +28,7 @@ void DMA::tick()
     ctx.active = (ctx.current_iter < 160); // 160 bytes to transfer
 }
 
-bool DMA::is_active()
+bool DMA::is_active() const
 {
     return ctx.active;
 }
