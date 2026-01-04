@@ -48,6 +48,16 @@ struct scanline_state_t
     bool obj_size;          //Based on LCDC bit 2, false = 8x8, true = 8x16
 };
 
+struct scanline_context
+{
+    uint8_t* vram_base_ptr;
+    uint8_t* bg_map_base_ptr;
+    uint8_t* win_map_base_ptr;
+    uint16_t tile_data_base_addr;
+    bool     window_enabled;
+    int      wx_start;
+};
+
 class Ppu
 {
 public:
@@ -98,11 +108,12 @@ private:
     mutable std::mutex vram_mutex;
     mutable std::mutex screen_mutex;
 
-    scanline_state_t sst = {};
+    scanline_context sctx = {}; // Used for per-scanline constants (pointers/ints/bools) that are helper values for pixel rendering (not internal GB state)
+    scanline_state_t sst = {}; // Used for internal gameboy values (LY/SCX/SCY/WX/WY/etc)
     void handle_oam_search();
     void handle_pixel_transfer();
     void handle_hblank();
     void handle_vblank();
-    void set_pixel(int x, int y, int offx, int offy, bool is_window);
-    void oam_render_scanline();
+    void set_pixel(int x, int y, int offx, int offy, bool is_window, const scanline_context& ctx);
+    void oam_render_scanline(const scanline_context& ctx);
 };
