@@ -1,29 +1,47 @@
-#include "rom.h"
+#include "romdata.h"
 #include <iostream>
 #include <filesystem>
 #include <fstream>
-#include <cstring>
-#include <iomanip>
-#include "emu.h"
-
-Rom::Rom()
+    
+RomData::RomData(const std::string &filename, const std::string &bootrom_filename)
 {
-    // Initialize bootrom to zeros
-    std::memset(ctx.bootrom_data, 0, sizeof(ctx.bootrom_data));
+    load_bootrom(bootrom_filename);
+    load_rom(filename);
 }
 
-bool Rom::cart_load(const std::string &filename)
+std::string RomData::cart_lic_name()
+{
+    auto it = LIC_CODE.find(ctx.header.lic_code);
+    if (it != LIC_CODE.end()) 
+    {
+        return it->second;
+    }
+    return "UNKNOWN";
+}
+
+void RomData::load_rom(const std::string &filename)
 {
     namespace fs = std::filesystem;
-
-    if (!fs::exists(filename)) {
-        std::cerr << "ROM file does not exist: " << filename << std::endl;
-        return false;
+    
+    if (filename.empty()) 
+    {
+        std::cout << "No ROM file provided, starting with bootrom only.\n";
+        ctx.rom_loaded = false;
+        return;
     }
 
-    if (!fs::is_regular_file(filename)) {
+    if (!fs::exists(filename)) 
+    {
+        std::cerr << "ROM file does not exist: " << filename << std::endl;
+        ctx.rom_loaded = false;
+        return;
+    }
+
+    if (!fs::is_regular_file(filename)) 
+    {
         std::cerr << "Path is not a regular file: " << filename << std::endl;
-        return false;
+        ctx.rom_loaded = false;
+        return;
     }
 
     ctx.rom_size = static_cast<uint32_t>(fs::file_size(filename));
@@ -32,13 +50,15 @@ bool Rom::cart_load(const std::string &filename)
     std::ifstream file(filename, std::ios::binary);
     if (!file) {
         std::cerr << "Failed to open ROM file: " << filename << std::endl;
-        return false;
+        ctx.rom_loaded = false;
+        return;
     }
 
     file.read(reinterpret_cast<char*>(ctx.rom_data.get()), ctx.rom_size);
     if (!file) {
         std::cerr << "Failed to read ROM file: " << filename << std::endl;
-        return false;
+        ctx.rom_loaded = false;
+        return;
     }
 
     // Import ROM header (first 0x50 bytes from 0x0100 to 0x014F)
@@ -75,21 +95,42 @@ bool Rom::cart_load(const std::string &filename)
 
     std::cout << "\t Checksum : " << std::hex << std::setw(2) << std::setfill('0')
               << static_cast<int>(ctx.header.checksum) << " (" << ((x & 0xFF) ? "PASSED" : "FAILED") << ")\n";
-
-    return true;
+    
+    ctx.rom_loaded = true;
 }
 
-std::string Rom::cart_lic_name()
+void RomData::load_bootrom(const std::string &bootrom_filename)
 {
-    auto it = LIC_CODE.find(ctx.header.lic_code);
-    if (it != LIC_CODE.end()) 
-    {
-        return it->second;
+    namespace fs = std::filesystem;
+    
+    if (!fs::exists(bootrom_filename)) {
+        std::cerr << "Bootrom file does not exist: " << bootrom_filename << std::endl;
+        return;
     }
-    return "UNKNOWN";
+    
+    auto size = fs::file_size(bootrom_filename);
+    if (size != 0x100) {
+        std::cerr << "Invalid bootrom size (expected 256 bytes): " << size << std::endl;
+        return;
+    }
+    
+    std::ifstream bootrom_file(bootrom_filename, std::ios::binary);
+    if (!bootrom_file) {
+        std::cerr << "Failed to open bootrom file: " << bootrom_filename << std::endl;
+        return;
+    }
+    
+    bootrom_file.read(reinterpret_cast<char*>(ctx.bootrom_data), 0x100);
+    if (!bootrom_file) {
+        std::cerr << "Failed to read bootrom file: " << bootrom_filename << std::endl;
+        return;
+    }
+    
+    ctx.bootrom_enabled = true;
+    std::cout << "Bootrom loaded successfully\n";
 }
 
-std::string Rom::cart_type_name()
+std::string RomData::cart_type_name()
 {
     auto it = ROM_TYPES.find(ctx.header.type);
     if (it != ROM_TYPES.end()) 
@@ -97,65 +138,4 @@ std::string Rom::cart_type_name()
         return it->second;
     }
     return "UNKNOWN";}
-
-uint8_t Rom::cart_read(uint16_t address)
-{
-    // If bootrom is enabled and address is in bootrom range (0x0000-0x00FF)
-    if (ctx.bootrom_enabled && address < 0x0100) {
-        return ctx.bootrom_data[address];
-    }
-    
-    // Otherwise read from cartridge ROM
-    if (address < ctx.rom_size) {
-        return ctx.rom_data[address];
-    }
-    return 0xFF; // Return 0xFF for out of bounds reads
-}
-
-void Rom::cart_write(uint16_t address, uint8_t data)
-{
-    // ROM is read-only for basic cartridges
-    // MBC (Memory Bank Controller) writes would be handled here for advanced cartridges
-}
-
-bool Rom::bootrom_load(const std::string &filename)
-{
-    namespace fs = std::filesystem;
-    
-    if (!fs::exists(filename)) {
-        std::cerr << "Bootrom file does not exist: " << filename << std::endl;
-        return false;
-    }
-    
-    auto size = fs::file_size(filename);
-    if (size != 0x100) {
-        std::cerr << "Invalid bootrom size (expected 256 bytes): " << size << std::endl;
-        return false;
-    }
-    
-    std::ifstream file(filename, std::ios::binary);
-    if (!file) {
-        std::cerr << "Failed to open bootrom file: " << filename << std::endl;
-        return false;
-    }
-    
-    file.read(reinterpret_cast<char*>(ctx.bootrom_data), 0x100);
-    if (!file) {
-        std::cerr << "Failed to read bootrom file: " << filename << std::endl;
-        return false;
-    }
-    
-    ctx.bootrom_enabled = true;
-    std::cout << "Bootrom loaded successfully\n";
-    return true;
-}
-
-void Rom::disable_bootrom()
-{
-    if (ctx.bootrom_enabled) {
-        ctx.bootrom_enabled = false;
-        std::cout << "Bootrom disabled\n";
-    }
-}
-
 

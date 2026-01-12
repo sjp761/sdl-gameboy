@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent)
     
     // Auto-start emulator with bootrom only after UI is ready
     QTimer::singleShot(100, this, [this]() {
-        startEmulator("");
+        startEmulator("", "roms/dmg_boot.gb");
     });
 }
 
@@ -60,7 +60,7 @@ void MainWindow::openFile()
         MainWindow::setWindowTitle(fileName);
         recentFiles.insert(path);
         updateRecentFileMenu();
-        startEmulator(path);
+        startEmulator(path, "roms/dmg_boot.gb");
     }
 }
 
@@ -105,10 +105,10 @@ void MainWindow::handleRecentFileAction(QAction *action)
     QString filePath = action->data().toString();
     std::cout << "Recent file action triggered: " << filePath.toStdString() << std::endl;
     setWindowTitle(filePath);
-    startEmulator(filePath.toStdString());
+    startEmulator(filePath.toStdString(), "roms/dmg_boot.gb");
 }
 
-void MainWindow::startEmulator(const std::string& romPath)
+void MainWindow::startEmulator(const std::string& romPath, const std::string& bootromPath)
 {
     // Stop previous emulator if running
     std::shared_ptr<Emu> old_emu;
@@ -124,16 +124,9 @@ void MainWindow::startEmulator(const std::string& romPath)
     }
     
     // Create new emulator atomically
-    auto new_emu = std::make_shared<Emu>();
+    auto new_emu = std::make_shared<Emu>(romPath, bootromPath);
     new_emu->set_component_pointers();
     
-    // Load bootrom by default
-    new_emu->get_rom().bootrom_load("roms/dmg_boot.gb");
-    
-    // Load cart ROM if provided
-    if (!romPath.empty()) {
-        new_emu->get_rom().cart_load(romPath.c_str());
-    }
     
     new_emu->ctx.running = true;
     new_emu->ctx.paused = false;
@@ -144,14 +137,15 @@ void MainWindow::startEmulator(const std::string& romPath)
         emu_ref = new_emu;
     }
     ui->centralwidget->emu_ref = new_emu;  // weak_ptr assignment
-#ifdef ENABLE_DEBUG_VIEWERS
-    ui->centralwidget->tile_viewer_ptr = &tile_viewer;
-    ui->centralwidget->tile_map_viewer_ptr = &tile_map_viewer;
-    
-    // Signal to open tile viewers on main thread (after emulator is set up)
-    emit requestOpenTileViewer();
-    emit requestOpenTileMapViewer();
-#endif
+
+    #ifdef ENABLE_DEBUG_VIEWERS
+        ui->centralwidget->tile_viewer_ptr = &tile_viewer;
+        ui->centralwidget->tile_map_viewer_ptr = &tile_map_viewer;
+        
+        // Signal to open tile viewers on main thread (after emulator is set up)
+        emit requestOpenTileViewer();
+        emit requestOpenTileMapViewer();
+    #endif
     
     emuThread = std::thread([this]() {
         std::shared_ptr<Emu> emu;

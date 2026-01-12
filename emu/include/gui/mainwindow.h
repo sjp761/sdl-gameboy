@@ -39,19 +39,22 @@ public:
     SDLWidget* getSDLWidget();
     std::shared_ptr<Emu> emu_ref; // Current emulator instance
     std::mutex emu_ref_mutex; // Protects emu_ref access during thread start/stop (gets assigned on different thread than the main one)
-#ifdef ENABLE_DEBUG_VIEWERS
-    SDL_TileViewer tile_viewer;
-    SDL_TileMapViewer tile_map_viewer;
-#endif
 
-signals:
-#ifdef ENABLE_DEBUG_VIEWERS
-    void requestOpenTileViewer();
-    void requestOpenTileMapViewer();
-#endif
+    #ifdef ENABLE_DEBUG_VIEWERS
+        SDL_TileViewer tile_viewer;
+        SDL_TileMapViewer tile_map_viewer;
+    #endif
+
+    signals:
+
+    #ifdef ENABLE_DEBUG_VIEWERS
+        void requestOpenTileViewer();
+        void requestOpenTileMapViewer();
+    #endif
 
 public slots:
     void handleRecentFileAction(QAction* action);
+
 #ifdef ENABLE_DEBUG_VIEWERS
     void openTileViewer();
     void openTileMapViewer();
@@ -60,6 +63,6 @@ public slots:
 private:
     Ui::MainWindow *ui;
     std::thread emuThread;
-    void startEmulator(const std::string& romPath);
+    void startEmulator(const std::string& romPath, const std::string& bootromPath = "roms/dmg_boot.gb");
 };
 #endif // MAINWINDOW_H

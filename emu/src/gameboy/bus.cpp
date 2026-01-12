@@ -36,10 +36,6 @@ void Bus::init_memory_table()
 
 uint8_t Bus::bus_read(uint16_t address)
 {
-    if (test_mode) 
-    {
-        return opcode_test_mem[address];
-    }
     for (const auto& region : memory_regions) {
         if (address >= region.start && address <= region.end) {
             return (this->*region.read_fn)(address);

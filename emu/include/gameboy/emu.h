@@ -18,7 +18,7 @@ struct emu_context
 class Emu
 {
     private:
-        Rom rom;
+        ROM* rom;
         Bus bus;
         Cpu cpu;
         Timer timer;
@@ -28,11 +28,12 @@ class Emu
     public:
         emu_context ctx;
         
-        Emu();
+        Emu(const std::string &rom_filename, const std::string &bootrom_filename);
         Emu(bool test_mode_enable);
-        
+        ROM* create_cartridge(const std::string &filename, const std::string& bootrom_filename);
+
         // Accessors for components
-        Rom& get_rom() { return rom; }
+        ROM& get_rom() { return *rom; }
         Bus& get_bus() { return bus; }
         Cpu& get_cpu() { return cpu; }
         Ppu& get_ppu() { return ppu; }

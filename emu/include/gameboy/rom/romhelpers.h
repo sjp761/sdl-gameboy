@@ -2,7 +2,9 @@
 #include <cstdint>
 #include <unordered_map>
 #include <string>
-#include <memory>
+#include <memory> 
+
+// Seperate helper file to avoid circular dependencies between RomData and ROM classes (now both include romdata.h and rom.h includes romdata.h)
 
 struct rom_header {
     uint8_t entry[4];
@@ -23,6 +25,7 @@ struct rom_header {
 struct cart_context {
     char filename[1024];
     uint32_t rom_size;
+    bool rom_loaded = false;
     std::unique_ptr<uint8_t[]> rom_data;
     rom_header header;
     bool bootrom_enabled = true;  // Bootrom is enabled at startup
@@ -130,19 +133,4 @@ inline std::unordered_map<uint8_t, std::string> LIC_CODE = {
     {0x97, "Kaneko"},
     {0x99, "Pack in soft"},
     {0xA4, "Konami (Yu-Gi-Oh!)"}
-};
-
-class Rom
-{
-    public:
-        Rom();
-        bool cart_load(const std::string &filename);
-        bool bootrom_load(const std::string &filename);
-        cart_context ctx;
-        std::string cart_lic_name();
-        std::string cart_type_name();
-        uint8_t cart_read(uint16_t address);
-        void cart_write(uint16_t address, uint8_t data);
-        void disable_bootrom();
-        bool is_bootrom_enabled() const { return ctx.bootrom_enabled; }
 };

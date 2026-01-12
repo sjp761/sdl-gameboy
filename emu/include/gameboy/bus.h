@@ -4,14 +4,14 @@
 #include <string>
 #include <array>
 class Timer; // Forward declaration
-class Rom; // Forward declaration
+class ROM; // Forward declaration
 class Ppu; // Forward declaration
 class DMA;
 class LCD;
 class Bus
 {
     private:
-        Rom* rom;
+        ROM* rom;
         Timer* timer; // Timer reference
         Ppu* ppu; //  PPU reference
         DMA* dma; //  DMA reference
@@ -41,7 +41,7 @@ class Bus
     public:
         Bus();
         // Set component pointers
-        void set_cmp(Rom* rom_ptr, Timer* timer_ptr, Ppu* ppu_ptr, DMA* dma_ptr, LCD* lcd_ptr) { rom = rom_ptr; timer = timer_ptr; ppu = ppu_ptr; dma = dma_ptr; lcd = lcd_ptr; }
+        void set_cmp(ROM* rom_ptr, Timer* timer_ptr, Ppu* ppu_ptr, DMA* dma_ptr, LCD* lcd_ptr) { rom = rom_ptr; timer = timer_ptr; ppu = ppu_ptr; dma = dma_ptr; lcd = lcd_ptr; }
         uint8_t bus_read(uint16_t address);
         void bus_write(uint16_t address, uint8_t data);
         void exram_write(uint16_t address, uint8_t value);
