@@ -5,9 +5,11 @@
 
 class Timer
 {
-    uint16_t div, old_div;
-    uint8_t tima, tma, tac;
-    Bus* bus;
+    private:
+        uint16_t div, old_div;
+        uint8_t tima, tma, tac;
+        Bus* bus;
+        void falling_edge_check();
     public:
         Timer();
         // Set component pointers
