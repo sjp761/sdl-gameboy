@@ -1,5 +1,6 @@
 #include "emu.h"
 #include "cpu/cpu_tables.h"
+#include "mbc1.h"
 #include <filesystem>
 #include <iostream>
 
@@ -47,7 +48,9 @@ ROM* Emu::create_cartridge(const std::string &filename, const std::string& bootr
         case 0x00: // ROM ONLY
             romptr = new ROM(rom_data); // std::move called in constructor
             break;
-        // Future MBC types will go here
+        case 0x01: // MBC1
+            romptr = new MBC1(rom_data);
+            break;
         default:
             std::cerr << "Unsupported or unimplemented ROM type: " << std::hex << static_cast<int>(rom_type) << std::dec << "\n";
             romptr = new ROM(rom_data); // Fallback to ROM ONLY for now

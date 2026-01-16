@@ -101,4 +101,29 @@ namespace MemoryMap {
     inline bool is_lcd(uint16_t address) {
         return address >= LCD_START && address <= LCD_END;
     }
+
+
+    // MBC1 helpers
+    constexpr uint16_t MBC1_ROM_BANK_NUMBER_START = 0x2000;
+    constexpr uint16_t MBC1_ROM_BANK_NUMBER_END   = 0x3FFF;
+    constexpr uint16_t MBC1_RAM_BANK_NUMBER_START = 0x4000;
+    constexpr uint16_t MBC1_RAM_BANK_NUMBER_END   = 0x5FFF;
+    constexpr uint16_t MBC1_BANKING_MODE_START    = 0x6000;
+    constexpr uint16_t MBC1_BANKING_MODE_END      = 0x7FFF;
+    constexpr uint16_t MBC1_RAM_ENABLE_START      = 0x0000;
+    constexpr uint16_t MBC1_RAM_ENABLE_END        = 0x1FFF;
+
+    inline bool is_mbc1_rom_bank_number_area(uint16_t address) {
+        return address >= MBC1_ROM_BANK_NUMBER_START && address <= MBC1_ROM_BANK_NUMBER_END;
+    }
+    inline bool is_mbc1_ram_bank_number_area(uint16_t address) {
+        return address >= MBC1_RAM_BANK_NUMBER_START && address <= MBC1_RAM_BANK_NUMBER_END;
+    }
+
+    inline bool is_mbc1_banking_mode_area(uint16_t address) {
+        return address >= MBC1_BANKING_MODE_START && address <= MBC1_BANKING_MODE_END;
+    }
+    inline bool is_mbc1_ram_enable_area(uint16_t address) {
+        return address >= MBC1_RAM_ENABLE_START && address <= MBC1_RAM_ENABLE_END;
+    }
 }

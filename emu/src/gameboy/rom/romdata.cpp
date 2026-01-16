@@ -80,9 +80,8 @@ void RomData::load_rom(const std::string &filename)
     std::cout << "\t Title    : " << ctx.header.title << "\n";
     std::cout << "\t Type     : " << std::hex << std::uppercase << std::setw(2) << std::setfill('0')
               << static_cast<int>(ctx.header.type) << " (" << cart_type_name() << ")\n";
-    std::cout << "\t ROM Size : " << (32 << ctx.header.rom_size) << " KB\n";
-    std::cout << "\t RAM Size : " << std::hex << std::setw(2) << std::setfill('0')
-              << static_cast<int>(ctx.header.ram_size) << "\n";
+    std::cout << "\t ROM Size : " << cart_rom_size_name() << "\n";
+    std::cout << "\t RAM Size : " << cart_ram_size_name() << "\n";
     std::cout << "\t LIC Code : " << std::hex << std::setw(2) << std::setfill('0')
               << static_cast<int>(ctx.header.lic_code) << " (" << cart_lic_name() << ")\n";
     std::cout << "\t ROM Vers : " << std::hex << std::setw(2) << std::setfill('0')
@@ -137,5 +136,26 @@ std::string RomData::cart_type_name()
     {
         return it->second;
     }
-    return "UNKNOWN";}
+    return "UNKNOWN";
+}
+
+std::string RomData::cart_rom_size_name()
+{
+    auto it = ROM_SIZES.find(ctx.header.rom_size);
+    if (it != ROM_SIZES.end()) 
+    {
+        return it->second;
+    }
+    return "UNKNOWN";
+}
+
+std::string RomData::cart_ram_size_name()
+{
+    auto it = RAM_SIZES.find(ctx.header.ram_size);
+    if (it != RAM_SIZES.end()) 
+    {
+        return it->second;
+    }
+    return "UNKNOWN";
+}
 

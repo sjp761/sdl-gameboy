@@ -134,3 +134,24 @@ inline std::unordered_map<uint8_t, std::string> LIC_CODE = {
     {0x99, "Pack in soft"},
     {0xA4, "Konami (Yu-Gi-Oh!)"}
 };
+
+inline std::unordered_map<uint8_t, std::string> ROM_SIZES = {
+    {0x00, "32 KiB (2 Banks)"},
+    {0x01, "64 KiB (4 Banks)"},
+    {0x02, "128 KiB (8 Banks)"},
+    {0x03, "256 KiB (16 Banks)"},
+    {0x04, "512 KiB (32 Banks)"},
+    {0x05, "1 MiB (64 Banks)"},
+    {0x06, "2 MiB (128 Banks)"},
+    {0x07, "4 MiB (256 Banks)"},
+    {0x08, "8 MiB (512 Banks)"},
+};
+
+inline std::unordered_map<uint8_t, std::string> RAM_SIZES = {
+    {0x00, "0 KiB (No RAM)"},
+    {0x01, "Unused"},
+    {0x02, "8 KiB (1 Bank)"},
+    {0x03, "32 KiB (4 Banks)"},
+    {0x04, "128 KiB (16 Banks)"},
+    {0x05, "64 KiB (8 Banks)"},
+};

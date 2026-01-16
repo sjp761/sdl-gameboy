@@ -12,7 +12,6 @@ struct RomData // This will hold the rom data before being loaded into the Rom c
     std::string cart_lic_name();
     void load_rom(const std::string &filename);
     void load_bootrom(const std::string &bootrom_filename);
-    
-private:
-    bool read_file_data(const std::string &filepath, uint8_t* buffer, size_t expected_size, const std::string &file_type);
+    std::string cart_rom_size_name();
+    std::string cart_ram_size_name();
 };
