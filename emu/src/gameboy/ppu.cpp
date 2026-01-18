@@ -5,6 +5,7 @@
 #include "interrupts.h"
 #include "cpu.h"
 #include <mutex>
+#include <algorithm>
 class LCD;
 
 Ppu::Ppu() : bus(nullptr), lcd(nullptr), cpu(nullptr), dot(0)

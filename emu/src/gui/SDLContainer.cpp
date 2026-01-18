@@ -88,6 +88,8 @@ void SDLContainer::createNativeWindow()
             return;
         }
     }
+
+#ifdef __APPLE__
     else if (SDL_strcmp(driver,"cocoa") == 0)
     {
         void* cocoaWindow = SDL_GetPointerProperty(props, "SDL.window.cocoa.window", nullptr);
@@ -104,6 +106,7 @@ void SDLContainer::createNativeWindow()
         
         embedded = QWindow::fromWinId(reinterpret_cast<WId>(nsView));
     }
+#endif
 
     
     printf("Successfully created embedded QWindow\n");

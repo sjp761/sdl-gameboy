@@ -2,6 +2,7 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <cstring>
     
 RomData::RomData(const std::string &filename, const std::string &bootrom_filename)
 {

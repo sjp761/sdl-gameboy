@@ -3,6 +3,8 @@
 #include "memory_map.h"
 #include <string>
 #include <array>
+#include <memory>
+
 class Timer; // Forward declaration
 class ROM; // Forward declaration
 class Ppu; // Forward declaration
