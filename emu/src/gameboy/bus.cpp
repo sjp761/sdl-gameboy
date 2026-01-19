@@ -36,6 +36,10 @@ void Bus::init_memory_table()
 
 uint8_t Bus::bus_read(uint16_t address)
 {
+    #ifdef OPCODE_TEST
+        return opcode_test_mem[address];
+    #endif
+
     for (const auto& region : memory_regions) {
         if (address >= region.start && address <= region.end) {
             return (this->*region.read_fn)(address);
@@ -46,11 +50,11 @@ uint8_t Bus::bus_read(uint16_t address)
 
 void Bus::bus_write(uint16_t address, uint8_t data)
 {
-    if (test_mode) 
-    {
+    #ifdef OPCODE_TEST
         opcode_test_mem[address] = data;
         return;
-    }
+    #endif
+    
     for (const auto& region : memory_regions) {
         if (address >= region.start && address <= region.end) {
             (this->*region.write_fn)(address, data);

@@ -112,3 +112,5 @@ target_sources(opcode-test PRIVATE
 target_link_libraries(opcode-test PRIVATE JsonCpp::JsonCpp)
 
 target_include_directories(opcode-test PRIVATE ${GAMEBOY_INCLUDES})
+
+target_compile_definitions(opcode-test PRIVATE OPCODE_TEST)

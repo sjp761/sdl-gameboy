@@ -64,6 +64,7 @@ TestResult testOpcode(const std::string& opcodeHex, const std::string& jsonPath)
         // Create fresh emulator instance for each test
         Emu emu(true);
         emu.set_component_pointers();
+        emu.get_cpu().cpu_init();
         
         // Set initial state
         CpuTestHelper::setInitialState(emu.get_cpu(), emu.get_bus(), root[i]);

@@ -71,4 +71,8 @@ class Bus
         std::unique_ptr<uint8_t[]> opcode_test_mem = std::make_unique<uint8_t[]>(64*1024); // 64KB flat memory for opcode tests
         bool test_mode = false; // Flag to indicate if in test mode
         Bus(bool test_mode_enable);
+
+        #ifdef OPCODE_TEST
+            uint8_t opcode_test_memory[64 * 1024] = {}; // 64KB flat memory for opcode tests
+        #endif
 };

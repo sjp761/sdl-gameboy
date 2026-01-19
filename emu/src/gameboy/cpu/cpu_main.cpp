@@ -9,8 +9,21 @@
 #include <thread>
 #include <chrono>
 
-Cpu::Cpu() : bus(nullptr), timer(nullptr), dma(nullptr), ppu(nullptr)
+Cpu::Cpu() : bus(nullptr), timer(nullptr), dma(nullptr), ppu(nullptr),
+             fetched_data(0), mem_dest(0), opcode(), halted(false), 
+             stepping(false), ime(false), ime_delay(false), branch_taken(false)
 {
+    // Initialize all CPU registers to zero
+    regs.a = 0;
+    regs.f = 0;
+    regs.b = 0;
+    regs.c = 0;
+    regs.d = 0;
+    regs.e = 0;
+    regs.h = 0;
+    regs.l = 0;
+    regs.pc = 0;
+    regs.sp = 0;
 }
 
 void Cpu::cpu_init()
